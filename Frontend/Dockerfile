@@ -1,4 +1,3 @@
-cat > Frontend/Dockerfile <<'EOF'
 FROM node:22-alpine AS build
 WORKDIR /app
 RUN corepack enable
@@ -10,6 +9,3 @@ RUN pnpm build
 FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80
-EOF
-
-printf "node_modules\ndist\n.git\n" > Frontend/.dockerignore
