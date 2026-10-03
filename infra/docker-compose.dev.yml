@@ -1,0 +1,32 @@
+# Se suma al compose base: recarga en caliente y puertos abiertos para depurar
+services:
+  gateway:
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes: ["../Backend/services/gateway:/code"]
+
+  auth:
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes: ["../Backend/services/auth:/code"]
+    ports: ["8001:8000"]
+
+  crops:
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes: ["../Backend/services/crops:/code"]
+    ports: ["8002:8000"]
+
+  detection:
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ../Backend/services/detection:/code
+      - ../ml/export:/models:ro
+    ports: ["8003:8000"]
+
+  diagnosis:
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes: ["../Backend/services/diagnosis:/code"]
+    ports: ["8004:8000"]
+
+  consultations:
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes: ["../Backend/services/consultations:/code"]
+    ports: ["8005:8000"]

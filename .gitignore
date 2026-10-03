@@ -6,3 +6,4 @@ dist/
 ml/datasets/
 *.onnx
 *.pt
+.venv/

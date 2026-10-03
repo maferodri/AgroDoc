@@ -1,0 +1,87 @@
+name: agrodoc
+
+x-backend: &backend
+  restart: unless-stopped
+  networks: [agrodoc]
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    networks: [agrodoc]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  gateway:
+    <<: *backend
+    build: ../Backend/services/gateway
+    ports: ["8000:8000"]
+    environment:
+      AUTH_URL: http://auth:8000
+      CROPS_URL: http://crops:8000
+      DETECTION_URL: http://detection:8000
+      DIAGNOSIS_URL: http://diagnosis:8000
+      CONSULTATIONS_URL: http://consultations:8000
+
+  auth:
+    <<: *backend
+    build: ../Backend/services/auth
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/auth_db
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  crops:
+    <<: *backend
+    build: ../Backend/services/crops
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/crops_db
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  detection:
+    <<: *backend
+    build: ../Backend/services/detection
+    environment:
+      MODEL_PATH: /models/model.onnx
+    volumes:
+      - ../ml/export:/models:ro
+
+  diagnosis:
+    <<: *backend
+    build: ../Backend/services/diagnosis
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/diagnosis_db
+      DETECTION_URL: http://detection:8000
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  consultations:
+    <<: *backend
+    build: ../Backend/services/consultations
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/consultations_db
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  web:
+    build: ../Frontend
+    restart: unless-stopped
+    networks: [agrodoc]
+    ports: ["3000:80"]
+    depends_on: [gateway]
+
+networks:
+  agrodoc:
+
+volumes:
+  pgdata:
