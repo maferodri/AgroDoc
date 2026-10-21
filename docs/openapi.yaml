@@ -1,0 +1,1096 @@
+openapi: 3.0.3
+info:
+  title: AgroDoc Microservices API
+  version: 1.0.0
+  description: |
+    Especificación de contratos API First para los microservicios de AgroDoc basándose en el diseño de PostgreSQL:
+    - **Auth Service** (Usuarios, Perfiles de Agrónomos y Sesiones)
+    - **Crops Service** (Fincas, Cultivos, Tipos de Cultivo y Eventos)
+    - **Diagnosis Service** (Detección de Plagas, Catálogo y Tratamientos)
+    - **Consultations Service** (Atención Experta por Agrónomos)
+
+servers:
+  - url: http://localhost:8000/api/v1
+    description: API Gateway local
+
+paths:
+
+  # ==========================================
+  # AUTH SERVICE (/auth & /users)
+  # ==========================================
+
+  /auth/register:
+    post:
+      tags:
+        - Auth Service
+      summary: Registrar nuevo usuario
+      description: Crea un nuevo usuario con rol agricultor o agrónomo.
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Usuario registrado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: El correo ya está registrado.
+
+  /auth/login:
+    post:
+      tags:
+        - Auth Service
+      summary: Iniciar sesión
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Autenticación exitosa.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Credenciales inválidas.
+
+  /auth/refresh:
+    post:
+      tags:
+        - Auth Service
+      summary: Renovar token de acceso
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refresh_token
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        '200':
+          description: Token renovado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Token expirado o revocado.
+
+  /auth/logout:
+    post:
+      tags:
+        - Auth Service
+      summary: Cerrar sesión
+      security:
+        - BearerAuth: []
+      operationId: logoutUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refresh_token
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        '200':
+          description: Sesión cerrada y token revocado.
+
+  /users/me:
+    get:
+      tags:
+        - Auth Service
+      summary: Obtener perfil del usuario autenticado
+      security:
+        - BearerAuth: []
+      operationId: getMyProfile
+      responses:
+        '200':
+          description: Datos del usuario autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /agronomists:
+    get:
+      tags:
+        - Auth Service
+      summary: Listar agrónomos disponibles
+      security:
+        - BearerAuth: []
+      operationId: listAgronomists
+      parameters:
+        - name: available_only
+          in: query
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Lista de agrónomos con sus perfiles.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AgronomistUser'
+
+  # ==========================================
+  # CROPS SERVICE (/crop-types, /farms, /crops)
+  # ==========================================
+
+  /crop-types:
+    get:
+      tags:
+        - Crops Service
+      summary: Listar catálogo de tipos de cultivo
+      operationId: listCropTypes
+      responses:
+        '200':
+          description: Catálogo de cultivos (maíz, café, frijol, etc.).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CropType'
+
+  /farms:
+    get:
+      tags:
+        - Crops Service
+      summary: Listar fincas del usuario
+      security:
+        - BearerAuth: []
+      operationId: listFarms
+      responses:
+        '200':
+          description: Lista de fincas pertenecientes al usuario autenticado.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Farm'
+    post:
+      tags:
+        - Crops Service
+      summary: Crear una finca
+      security:
+        - BearerAuth: []
+      operationId: createFarm
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFarmRequest'
+      responses:
+        '201':
+          description: Finca creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Farm'
+
+  /crops:
+    get:
+      tags:
+        - Crops Service
+      summary: Listar cultivos del usuario
+      security:
+        - BearerAuth: []
+      operationId: listCrops
+      parameters:
+        - name: farm_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [active, harvested, discarded]
+      responses:
+        '200':
+          description: Lista de cultivos.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Crop'
+    post:
+      tags:
+        - Crops Service
+      summary: Registrar nuevo cultivo
+      security:
+        - BearerAuth: []
+      operationId: createCrop
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCropRequest'
+      responses:
+        '201':
+          description: Cultivo registrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Crop'
+
+  /crops/{id}:
+    get:
+      tags:
+        - Crops Service
+      summary: Obtener detalle de un cultivo
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Detalle del cultivo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Crop'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /crops/{id}/events:
+    get:
+      tags:
+        - Crops Service
+      summary: Listar bitácora de eventos del cultivo
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lista de eventos del cultivo.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CropEvent'
+    post:
+      tags:
+        - Crops Service
+      summary: Agregar evento al historial del cultivo
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCropEventRequest'
+      responses:
+        '201':
+          description: Evento registrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CropEvent'
+
+  # ==========================================
+  # DIAGNOSIS SERVICE (/pests, /diagnoses)
+  # ==========================================
+
+  /pests:
+    get:
+      tags:
+        - Diagnosis Service
+      summary: Catálogo de plagas y enfermedades
+      parameters:
+        - name: crop_type_code
+          in: query
+          required: false
+          schema:
+            type: string
+            example: maize
+      responses:
+        '200':
+          description: Lista de plagas conocidas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pest'
+
+  /pests/{id}:
+    get:
+      tags:
+        - Diagnosis Service
+      summary: Detalle de plaga con sus tratamientos sugeridos
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Información completa de la plaga y sus tratamientos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PestDetail'
+
+  /diagnoses:
+    post:
+      tags:
+        - Diagnosis Service
+      summary: Diagnosticar foto de un cultivo (Inferencia + Guardado)
+      description: |
+        Sube la foto de la planta con el `crop_id`. El servicio valida la propiedad del cultivo con `crops_db`, 
+        ejecuta la inferencia con el modelo ONNX (`detection`), calcula la confianza y si la confianza es baja 
+        escalea automáticamente a `consultations_db`.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - crop_id
+                - image
+              properties:
+                crop_id:
+                  type: string
+                  format: uuid
+                  description: ID del cultivo perteneciente al usuario
+                image:
+                  type: string
+                  format: binary
+                  description: Archivo de imagen de la hoja/planta
+      responses:
+        '201':
+          description: Diagnóstico procesado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Diagnosis'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          description: El cultivo no pertenece al usuario autenticado.
+
+    get:
+      tags:
+        - Diagnosis Service
+      summary: Listar diagnósticos del usuario autenticado
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: crop_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Historial de diagnósticos.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Diagnosis'
+
+  /diagnoses/{id}:
+    get:
+      tags:
+        - Diagnosis Service
+      summary: Obtener un diagnóstico por ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Detalle del diagnóstico.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Diagnosis'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ==========================================
+  # CONSULTATIONS SERVICE (/consultations)
+  # ==========================================
+
+  /consultations:
+    get:
+      tags:
+        - Consultations Service
+      summary: Listar consultas / casos escalados
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [open, assigned, answered, closed, cancelled]
+        - name: assigned_to_me
+          in: query
+          required: false
+          schema:
+            type: boolean
+            description: Filtrar por el agrónomo autenticado
+      responses:
+        '200':
+          description: Lista de consultas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Consultation'
+
+    post:
+      tags:
+        - Consultations Service
+      summary: Escalar manualmente un diagnóstico a consulta
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - diagnosis_id
+              properties:
+                diagnosis_id:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: Consulta creada exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Consultation'
+
+  /consultations/{id}:
+    get:
+      tags:
+        - Consultations Service
+      summary: Detalle de una consulta
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Detalle de la consulta.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Consultation'
+
+    patch:
+      tags:
+        - Consultations Service
+      summary: Actualizar / Asignar / Resolver consulta (Agrónomo)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateConsultationRequest'
+      responses:
+        '200':
+          description: Consulta actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Consultation'
+
+  /consultations/{id}/messages:
+    get:
+      tags:
+        - Consultations Service
+      summary: Ver mensajes de la conversación
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Historial de mensajes entre agricultor y agrónomo.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConsultationMessage'
+
+    post:
+      tags:
+        - Consultations Service
+      summary: Enviar mensaje en la consulta
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - body
+              properties:
+                body:
+                  type: string
+                  example: "Le sugiero aplicar fungicida a base de cobre inmediatamente en el follaje."
+      responses:
+        '201':
+          description: Mensaje guardado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsultationMessage'
+
+
+# ==========================================
+# DEFINICIÓN DE COMPONENTES Y ESQUEMAS SQL
+# ==========================================
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Solicitud incorrecta o datos inválidos.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Token de autenticación faltante o inválido.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Recurso no encontrado.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          example: BAD_REQUEST
+        message:
+          type: string
+          example: El campo 'crop_id' es obligatorio.
+
+    # --- AUTH SCHEMAS ---
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        full_name:
+          type: string
+        role:
+          type: string
+          enum: [farmer, agronomist, admin]
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    AgronomistProfile:
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        specialty:
+          type: string
+          example: Fitopatología en café
+        license_number:
+          type: string
+          example: AGR-98421
+        is_available:
+          type: boolean
+
+    AgronomistUser:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            profile:
+              $ref: '#/components/schemas/AgronomistProfile'
+
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - full_name
+        - role
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        full_name:
+          type: string
+        role:
+          type: string
+          enum: [farmer, agronomist]
+        specialty:
+          type: string
+        license_number:
+          type: string
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          example: Bearer
+        user:
+          $ref: '#/components/schemas/User'
+
+    # --- CROPS SCHEMAS ---
+
+    CropType:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+          example: maize
+        name_es:
+          type: string
+          example: Maíz
+        scientific_name:
+          type: string
+          example: Zea mays
+
+    Farm:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        owner_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Finca La Esperanza
+        department:
+          type: string
+          example: El Paraíso
+        municipality:
+          type: string
+          example: Danlí
+        area_hectares:
+          type: number
+          example: 3.5
+
+    CreateFarmRequest:
+      type: object
+      required:
+        - name
+        - department
+        - municipality
+      properties:
+        name:
+          type: string
+        department:
+          type: string
+        municipality:
+          type: string
+        area_hectares:
+          type: number
+
+    Crop:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        owner_id:
+          type: string
+          format: uuid
+        farm_id:
+          type: string
+          format: uuid
+        crop_type_id:
+          type: integer
+        name:
+          type: string
+          example: Maíz Lote Norte
+        planted_on:
+          type: string
+          format: date
+        growth_stage:
+          type: string
+          example: Floración
+        status:
+          type: string
+          enum: [active, harvested, discarded]
+
+    CreateCropRequest:
+      type: object
+      required:
+        - farm_id
+        - crop_type_id
+        - name
+        - planted_on
+      properties:
+        farm_id:
+          type: string
+          format: uuid
+        crop_type_id:
+          type: integer
+        name:
+          type: string
+        planted_on:
+          type: string
+          format: date
+        growth_stage:
+          type: string
+
+    CropEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        crop_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          example: Riego
+        description:
+          type: string
+          example: Aplicación de fertilizante foliar NPK.
+        occurred_at:
+          type: string
+          format: date-time
+
+    CreateCropEventRequest:
+      type: object
+      required:
+        - event_type
+        - description
+      properties:
+        event_type:
+          type: string
+        description:
+          type: string
+        occurred_at:
+          type: string
+          format: date-time
+
+    # --- DIAGNOSIS SCHEMAS ---
+
+    Pest:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+          example: fall_armyworm
+        model_label:
+          type: string
+          example: Spodoptera_frugiperda
+        common_name:
+          type: string
+          example: Gusano Cogollero
+        category:
+          type: string
+          example: Insecto
+        symptoms:
+          type: string
+          example: Hojas perforadas y excremento en el cogollo.
+
+    Treatment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        pest_id:
+          type: integer
+        treatment_type:
+          type: string
+          example: Biológico
+        title:
+          type: string
+          example: Aplicación de Bacillus thuringiensis
+        description:
+          type: string
+
+    PestDetail:
+      allOf:
+        - $ref: '#/components/schemas/Pest'
+        - type: object
+          properties:
+            treatments:
+              type: array
+              items:
+                $ref: '#/components/schemas/Treatment'
+
+    TopKPrediction:
+      type: object
+      properties:
+        label:
+          type: string
+          example: Spodoptera_frugiperda
+        confidence:
+          type: number
+          example: 0.88
+
+    Diagnosis:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        crop_id:
+          type: string
+          format: uuid
+        image_path:
+          type: string
+          example: /storage/diagnoses/2026/10/img_98123.jpg
+        model_version:
+          type: string
+          example: v1.2.0
+        predicted_label:
+          type: string
+          example: Spodoptera_frugiperda
+        pest_id:
+          type: integer
+          nullable: true
+        confidence:
+          type: number
+          example: 0.62
+        threshold_used:
+          type: number
+          example: 0.70
+        low_confidence:
+          type: boolean
+          example: true
+        top_k:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopKPrediction'
+        consultation_id:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    # --- CONSULTATIONS SCHEMAS ---
+
+    Consultation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        diagnosis_id:
+          type: string
+          format: uuid
+        requester_id:
+          type: string
+          format: uuid
+        agronomist_id:
+          type: string
+          format: uuid
+          nullable: true
+        status:
+          type: string
+          enum: [open, assigned, answered, closed, cancelled]
+        image_path:
+          type: string
+        model_label:
+          type: string
+        model_confidence:
+          type: number
+        verified_label:
+          type: string
+          nullable: true
+          description: Confirmación final dada por el agrónomo
+        model_was_correct:
+          type: boolean
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    UpdateConsultationRequest:
+      type: object
+      properties:
+        agronomist_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [open, assigned, answered, closed, cancelled]
+        verified_label:
+          type: string
+        model_was_correct:
+          type: boolean
+
+    ConsultationMessage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        consultation_id:
+          type: string
+          format: uuid
+        author_id:
+          type: string
+          format: uuid
+        author_role:
+          type: string
+          enum: [farmer, agronomist]
+        body:
+          type: string
+        created_at:
+          type: string
+          format: date-time
