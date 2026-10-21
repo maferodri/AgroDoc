@@ -1,0 +1,49 @@
+{
+    "colors": {
+        "primary": { "value": "{color.green.500}" },
+        "textOnPrimary": { "value": "{color.white}" },
+        "secondary": { "value": "{color.green.50}" },
+        "special": { "value": "{color.green.800}" },
+        "danger": { "value": "{color.red.500}" }, 
+        "warning": { "value": "{color.yellow.500}" },
+        "background": { "value": "{color.gray.50}" },
+        "notselected": { "value": "{color.gray.700}" }
+    },
+    "spacing": {
+        "screenPadding": { "value": "{spacing.md}" },
+        "cardPadding": { "value": "{spacing.md}" },
+        "sectionGap": { "value": "{spacing.lg}" },
+        "inputGap": { "value": "{spacing.sm}" }
+    },
+    "radius": {
+        "button": { "value": "{radius.md}" },
+        "card": { "value": "{radius.xl}" },
+        "input": { "value": "{radius.md}" },
+        "avatar": { "value": "{radius.full}" },
+        "badge": { "value": "{radius.full}" },
+        "buttonX": { "value": "{spacing.lg}" },
+        "buttonY": { "value": "{spacing.sm}" }
+    },
+    "shadow": {
+        "card": { "value": "{shadow.sm}" },
+        "modal": { "value": "{shadow.lg}" }
+    },
+    "typography": {
+        "title": {
+        "fontSize": { "value": "{typography.fontSize.xxl}" },
+        "fontWeight": { "value": "{typography.fontWeight.bold}" }
+        },
+        "body": {
+        "fontSize": { "value": "{typography.fontSize.base}" },
+        "fontWeight": { "value": "{typography.fontWeight.regular}" }
+        },
+        "caption": {
+        "fontSize": { "value": "{typography.fontSize.sm}" },
+        "fontWeight": { "value": "{typography.fontWeight.regular}" }
+        },
+        "button": {
+        "fontSize": { "value": "{typography.fontSize.lg}" },
+        "fontWeight": { "value": "{typography.fontWeight.medium}" }
+        }
+    }
+}

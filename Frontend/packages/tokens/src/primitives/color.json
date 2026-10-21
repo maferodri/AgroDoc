@@ -16,7 +16,8 @@
             "50": { "value": "#F2F2F2" },
             "200": { "value": "#EEF1EF" },
             "500": { "value": "#C5C6CC" },
-        "700": { "value": "#75777C" }
-        }
+            "700": { "value": "#75777C" }
+        },
+        "white": { "value": "#FFFFFF" }
     }
 }

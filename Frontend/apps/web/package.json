@@ -11,10 +11,12 @@
   },
   "dependencies": {
     "@agrodoc/features": "workspace:*",
+    "@agrodoc/tokens": "workspace:*",
     "@agrodoc/ui": "workspace:*",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "react-native-web": "^0.21.3"
+    "react-native-web": "^0.21.3",
+    "react-router-dom": "^7.18.4"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
