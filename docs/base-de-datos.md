@@ -1,39 +1,43 @@
 # Base de datos de AgroDoc
 
-Documento de diseño de Postgres: qué bases existen, qué tablas tiene cada una, **qué servicio es dueño de cada tabla** y cómo se relacionan entre sí.
+Diseño de la base de datos del monolito: qué tablas existen, **qué módulo es dueño de cada una** y cómo se relacionan.
 
-Los esquemas SQL están en [`infra/postgres/schema/`](../infra/postgres/schema/) (uno por base de datos) y se aplican con `./scripts/schema.sh`.
+La fuente de verdad del esquema son las migraciones de Alembic (`Backend/alembic/versions/`), que se aplican con `./scripts/migrate.sh`.
 
-## 1. ¿Una base o varias?
+## 1. Una sola base de datos
 
-**Decisión: un servidor Postgres con una base de datos por servicio** (`auth_db`, `crops_db`, `diagnosis_db`, `consultations_db`). Es lo que ya crea `infra/postgres/init-databases.sh`.
+**Decisión: un servidor Postgres con una única base, `agrodoc_db`.**
 
-| | Una base por servicio (elegida) | Una sola base compartida |
+Al pasar de microservicios a un monolito modular se eliminaron las cuatro bases (`auth_db`, `crops_db`, `diagnosis_db`, `consultations_db`). La separación ya no se hace por base, sino por **propiedad de tablas**:
+
+* Cada tabla tiene un módulo dueño.
+* Solo el módulo dueño la lee y escribe.
+* Los demás módulos piden datos a través del `service.py` del dueño, nunca con `SELECT` directo.
+
+| | Varias bases (antes) | Una base, tablas por módulo (ahora) |
 |---|---|---|
-| Independencia | Cada servicio cambia su esquema sin afectar a los demás | Un cambio de tabla puede romper a otro servicio |
-| Acoplamiento | Obliga a comunicarse por API | Tentación de hacer `JOIN` entre servicios (monolito disfrazado) |
-| Integridad | Sin `FOREIGN KEY` entre servicios; se valida por API | `FOREIGN KEY` en todo |
-| Complejidad | Algo más de trabajo al cruzar datos | Más simple de consultar |
+| Infraestructura | 4 bases que mantener | 1 base |
+| Migraciones | 4 historias de Alembic | 1 historia de Alembic |
+| Aislamiento | Físico (por base) | Lógico (por convención y revisión de código) |
+| Integridad | Sin FK entre servicios | FK dentro del módulo; referencias lógicas entre módulos |
+| Depuración | Varias conexiones y contenedores | Una conexión, `psql` directo |
 
-`detection` y `gateway` **no tienen base de datos**: `detection` solo hace inferencia y `gateway` solo enruta.
-
-> Si el equipo prefiere simplificar, existe un término medio: una sola base con un *schema* por servicio y un usuario de Postgres por servicio con permiso solo sobre su schema. Para el alcance de la clase, lo ya montado (una base por servicio) cumple mejor la idea de microservicios.
+La modularidad se mantiene en el código (vertical slicing), no en la infraestructura. Ver [`arquitectura.md`](./arquitectura.md).
 
 ## 2. Reglas
 
-1. **Cada tabla tiene un solo servicio dueño.** Solo ese servicio la lee y escribe directamente.
-2. **Prohibido consultar la base de otro servicio.** Si `diagnosis` necesita saber si un cultivo es del usuario, se lo pregunta a `crops` por HTTP.
-3. **Referencias entre servicios = columnas `uuid` sin `FOREIGN KEY`** (en los `.sql` están marcadas como `ref lógica`). Por ejemplo, `crops.owner_id` guarda un `users.id`, pero Postgres no lo verifica.
-4. **IDs `uuid`** generados por la base (`gen_random_uuid()`), así se pueden compartir entre servicios sin colisiones. Los catálogos pequeños usan `smallserial` más un `code` estable.
+1. **Cada tabla tiene un solo módulo dueño.** Solo ese módulo la lee y escribe directamente.
+2. **Prohibido que un módulo consulte tablas de otro.** Si `diagnosis` necesita saber si un cultivo es del usuario, llama a `crops.service`.
+3. **FK dentro del módulo, referencia lógica entre módulos.** Dentro de un mismo módulo se usan `FOREIGN KEY` reales. Entre módulos se guarda un `uuid` sin FK (marcado como `ref lógica`) para no acoplar los esquemas.
+4. **IDs `uuid`** generados por la base (`gen_random_uuid()`), así se pueden compartir entre módulos sin colisiones. Los catálogos pequeños usan `smallserial` más un `code` estable.
 5. **Fechas en `timestamptz`** y `updated_at` automático mediante trigger.
-6. **No se borran usuarios**: se desactivan (`users.is_active = false`), porque otros servicios guardan su `id`.
+6. **No se borran usuarios**: se desactivan (`users.is_active = false`), porque otros módulos guardan su `id`.
 
-## 3. Vista general: qué servicio usa qué base
+## 3. Vista general: qué módulo usa qué tablas
 
 ```mermaid
 flowchart LR
-    subgraph Servicios
-        gw[gateway]
+    subgraph API[Monolito FastAPI]
         auth[auth]
         crops[crops]
         det[detection]
@@ -41,38 +45,45 @@ flowchart LR
         cons[consultations]
     end
 
-    gw -. sin BD .- gw
-    det -. sin BD .- det
+    db[(agrodoc_db)]
 
-    auth ==> adb[(auth_db)]
-    crops ==> cdb[(crops_db)]
-    diag ==> ddb[(diagnosis_db)]
-    cons ==> kdb[(consultations_db)]
+    auth ==> db
+    crops ==> db
+    diag ==> db
+    cons ==> db
 
-    model[/ml/export/model.onnx/] -.-> det
+    det -. sin tablas: usa el modelo ONNX .-> det
 ```
 
-Las flechas gruesas son acceso directo (lectura y escritura). Todo lo demás pasa por API.
+## 4. Tablas por módulo
 
-## 4. Referencias lógicas entre bases
+| Módulo | Tablas | Contenido |
+|---|---|---|
+| `auth` | `users`, `agronomist_profiles`, `refresh_tokens` | Cuentas, perfiles de agrónomo y sesiones |
+| `crops` | `crop_types`, `farms`, `crops`, `crop_events` | Catálogo de cultivos, fincas, cultivos e historial |
+| `diagnosis` | `pests`, `pest_crops`, `treatments`, `diagnoses` | Catálogo de plagas, tratamientos y resultados |
+| `consultations` | `consultations`, `consultation_messages` | Casos escalados y conversación |
+| `detection` | — | Solo inferencia |
 
-Cada flecha punteada es una columna `uuid` que apunta a otra base **sin** `FOREIGN KEY`:
+## 5. Referencias lógicas entre módulos
+
+Cada flecha punteada es una columna `uuid` que apunta a una tabla de otro módulo **sin** `FOREIGN KEY`. La validación se hace en el `service.py` del módulo dueño.
 
 ```mermaid
 flowchart LR
-    subgraph auth_db
+    subgraph auth[tablas de auth]
         users
     end
-    subgraph crops_db
+    subgraph crops[tablas de crops]
         farms
         crops
         crop_types
     end
-    subgraph diagnosis_db
+    subgraph diagnosis[tablas de diagnosis]
         diagnoses
         pest_crops
     end
-    subgraph consultations_db
+    subgraph consultations[tablas de consultations]
         consultations
         consultation_messages
     end
@@ -90,9 +101,9 @@ flowchart LR
     consultation_messages -. author_id .-> users
 ```
 
-## 5. Diagramas por base de datos
+## 6. Diagramas por módulo
 
-### auth_db (servicio `auth`)
+### Módulo auth
 
 ```mermaid
 erDiagram
@@ -122,7 +133,7 @@ erDiagram
     }
 ```
 
-### crops_db (servicio `crops`)
+### Módulo crops
 
 ```mermaid
 erDiagram
@@ -163,7 +174,7 @@ erDiagram
     }
 ```
 
-### diagnosis_db (servicio `diagnosis`)
+### Módulo diagnosis
 
 ```mermaid
 erDiagram
@@ -206,7 +217,7 @@ erDiagram
     }
 ```
 
-### consultations_db (servicio `consultations`)
+### Módulo consultations
 
 ```mermaid
 erDiagram
@@ -233,97 +244,92 @@ erDiagram
     }
 ```
 
-## 6. Quién usa cada tabla
+## 7. Quién usa cada tabla
 
-**Dueño** = único servicio que la lee y escribe en la base. **Consumidores** = servicios que necesitan sus datos y los obtienen **por API** del dueño.
+**Dueño** = único módulo que la lee y escribe. **Consumidores** = módulos que necesitan sus datos y los obtienen llamando al `service.py` del dueño.
 
-| Base | Tabla | Dueño | Consumidores (vía API) | Para qué |
-|---|---|---|---|---|
-| `auth_db` | `users` | `auth` | `gateway` (validar sesión), `consultations` (nombre del agrónomo) | Cuentas y roles |
-| `auth_db` | `agronomist_profiles` | `auth` | `consultations` (elegir agrónomo disponible) | Datos del agrónomo |
-| `auth_db` | `refresh_tokens` | `auth` | — | Renovar sesión |
-| `crops_db` | `crop_types` | `crops` | `diagnosis`, `web` | Catálogo: maíz, café, frijol |
-| `crops_db` | `farms` | `crops` | `web` | Fincas del usuario |
-| `crops_db` | `crops` | `crops` | `diagnosis` (verificar que el cultivo es del usuario), `consultations` (contexto del caso), `web` | Cultivos guardados |
-| `crops_db` | `crop_events` | `crops` | `web` | Bitácora del cultivo |
-| `diagnosis_db` | `pests` | `diagnosis` | `consultations`, `web` | Catálogo de plagas |
-| `diagnosis_db` | `pest_crops` | `diagnosis` | `web` | Qué plaga afecta a qué cultivo |
-| `diagnosis_db` | `treatments` | `diagnosis` | `web` | Recomendaciones por plaga |
-| `diagnosis_db` | `diagnoses` | `diagnosis` | `crops` (historial de un cultivo), `consultations` (detalle del caso), `web` | Resultado de cada imagen analizada |
-| `consultations_db` | `consultations` | `consultations` | `diagnosis` (estado del caso), `web` | Casos escalados a agrónomos |
-| `consultations_db` | `consultation_messages` | `consultations` | `web` | Conversación agricultor ↔ agrónomo |
-| *(sin BD)* | — | `detection`, `gateway` | — | Inferencia y enrutado |
+| Tabla | Dueño | Consumidores (vía `service.py`) | Para qué |
+|---|---|---|---|
+| `users` | `auth` | `crops`, `diagnosis`, `consultations` | Cuentas y roles |
+| `agronomist_profiles` | `auth` | `consultations` | Elegir agrónomo disponible |
+| `refresh_tokens` | `auth` | — | Renovar sesión |
+| `crop_types` | `crops` | `diagnosis` | Catálogo: maíz, café, frijol |
+| `farms` | `crops` | — | Fincas del usuario |
+| `crops` | `crops` | `diagnosis`, `consultations` | Cultivos guardados y contexto del caso |
+| `crop_events` | `crops` | — | Bitácora del cultivo |
+| `pests` | `diagnosis` | `consultations` | Catálogo de plagas |
+| `pest_crops` | `diagnosis` | — | Qué plaga afecta a qué cultivo |
+| `treatments` | `diagnosis` | — | Recomendaciones por plaga |
+| `diagnoses` | `diagnosis` | `consultations` | Detalle del caso |
+| `consultations` | `consultations` | `diagnosis` | Estado del caso escalado |
+| `consultation_messages` | `consultations` | — | Conversación agricultor ↔ agrónomo |
 
-## 7. Qué tablas se tocan en cada paso
+## 8. Qué tablas se tocan en cada paso
 
 Flujo de un diagnóstico con baja confianza:
 
 ```mermaid
 sequenceDiagram
     actor U as Agricultor
-    participant W as Web
-    participant G as Gateway
-    participant A as auth
-    participant C as crops
-    participant D as diagnosis
-    participant M as detection
-    participant K as consultations
+    participant R as auth (router)
+    participant D as diagnosis.service
+    participant C as crops.service
+    participant M as detection.service
+    participant K as consultations.service
     actor AG as Agrónomo
 
-    U->>W: Sube foto de su cultivo
-    W->>G: POST /diagnoses (foto + crop_id)
-    G->>A: Validar token
-    Note right of A: auth_db: lee users
-    G->>D: Crear diagnóstico
+    U->>R: Sube foto de su cultivo
+    R->>D: create_diagnosis(user, crop_id, imagen)
     D->>C: ¿El cultivo es de este usuario?
-    Note right of C: crops_db: lee crops
-    D->>M: Imagen → etiqueta + confianza
-    Note right of M: sin base de datos (usa el modelo ONNX)
-    Note right of D: diagnosis_db: lee pests, treatments<br/>escribe diagnoses
+    Note right of C: lee crops
+    D->>M: predict(imagen)
+    Note right of M: sin BD (modelo ONNX)
+    Note right of D: lee pests, treatments<br/>escribe diagnoses
     alt confianza menor al umbral
-        D->>K: Crear consulta (copia imagen y resultado)
-        Note right of K: consultations_db: escribe consultations
-        Note right of D: diagnosis_db: actualiza diagnoses.consultation_id
+        D->>K: create_consultation(copia del diagnóstico)
+        Note right of K: escribe consultations
+        Note right of D: actualiza diagnoses.consultation_id
     end
-    D-->>G: Resultado
-    G-->>W: Diagnóstico y recomendaciones
+    D-->>R: Resultado
+    R-->>U: Diagnóstico y recomendaciones
     AG->>K: Responde el caso
-    Note right of K: consultations_db: escribe consultation_messages<br/>actualiza consultations (verified_label, status)
+    Note right of K: escribe consultation_messages<br/>actualiza consultations
 ```
 
-## 8. Detalles de diseño
+Todas las llamadas son funciones del mismo proceso. No hay HTTP interno ni transacciones distribuidas.
 
-* **`diagnoses.low_confidence` es una columna calculada** (`confidence < threshold_used`), así nunca se contradice con la confianza guardada. El umbral se configura en el servicio `diagnosis` (variable de entorno) y se guarda en cada fila para saber con cuál se decidió.
+## 9. Detalles de diseño
+
+* **`diagnoses.low_confidence` es una columna calculada** (`confidence < threshold_used`), así nunca se contradice con la confianza guardada. El umbral se configura en `CONFIDENCE_THRESHOLD` y se guarda en cada fila para saber con cuál se decidió.
 * **`diagnoses.top_k`** guarda las mejores predicciones alternativas del modelo en JSON: `[{"label": "...", "confidence": 0.12}]`.
-* **`consultations` guarda una copia** de la imagen, la etiqueta y la confianza del modelo. Así el agrónomo ve el caso completo sin que `consultations` dependa de `diagnosis` en cada lectura.
+* **`consultations` guarda una copia** de la imagen, la etiqueta y la confianza del modelo. Así el agrónomo ve el caso completo sin depender de `diagnosis` en cada lectura.
 * **Reentrenamiento:** cuando el agrónomo responde, `verified_label` y `model_was_correct` quedan como etiqueta verificada por un experto. Es una fuente de datos reales de la región para el fine-tuning del modelo.
 * **`pests.model_label`** es la clase exacta que devuelve el modelo. Tiene que coincidir con la lista de clases del entrenamiento (`ml/`); si se agregan o renombran clases, hay que actualizar el catálogo.
-* **`crop_types.code`** (`maize`, `coffee`, `beans`) es la clave estable que usan los demás servicios en vez del `id` numérico.
+* **`crop_types.code`** (`maize`, `coffee`, `beans`) es la clave estable que usan los demás módulos en vez del `id` numérico.
 
-## 9. Pendientes y decisiones abiertas
+## 10. Pendientes y decisiones abiertas
 
-- [ ] **Almacenamiento de imágenes:** las tablas guardan `image_path`, pero aún no hay dónde se guardan los archivos (un volumen de Docker compartido, MinIO/S3, etc.). Hay que decidirlo y agregarlo al compose.
-- [ ] **Datos iniciales (seed):** `crop_types` ya viene con maíz, café y frijol; `pests`, `pest_crops` y `treatments` están vacías y deben llenarse con las plagas del modelo y sus tratamientos, idealmente revisados por un agrónomo.
-- [ ] **Alembic:** estos `.sql` son el diseño de referencia. Cuando el equipo de backend cree los modelos SQLAlchemy, las migraciones de Alembic pasan a ser la fuente de verdad. Mientras tanto, `./scripts/schema.sh` sirve para probar.
-- [ ] **URLs entre servicios en el compose:** en el diagrama del punto 7, `diagnosis` llama a `crops` y a `consultations`, pero en `infra/docker-compose.yml` solo tiene `DETECTION_URL`. Hay que agregarle `CROPS_URL` y `CONSULTATIONS_URL`.
-- [ ] **Umbral de confianza:** definir el valor inicial (por ejemplo 0.70) y dónde se configura.
+- [ ] **Modelos SQLAlchemy:** `models.py` de cada módulo está vacío; hay que implementar las tablas de este documento y generar la migración inicial con `./scripts/migrate.sh -m "esquema inicial"`.
+- [ ] **Almacenamiento de imágenes:** las tablas guardan `image_path`, pero aún no hay dónde se guardan los archivos (volumen de Docker compartido, MinIO/S3, etc.). Hay que decidirlo y agregarlo al compose.
+- [ ] **Datos iniciales (seed):** `crop_types` debe venir con maíz, café y frijol; `pests`, `pest_crops` y `treatments` deben llenarse con las plagas del modelo y sus tratamientos, idealmente revisados por un agrónomo.
+- [ ] **Umbral de confianza:** definir el valor inicial (por defecto 0.70) y dónde se configura. Ya existe `CONFIDENCE_THRESHOLD` en `docker-compose.yml`.
+- [ ] **Índices:** agregar índices a `diagnoses.user_id`, `diagnoses.crop_id` y `consultations.status` cuando existan consultas reales.
 
-## 10. Cómo aplicar y revisar los esquemas
+## 11. Cómo revisar el esquema
 
 Con el entorno levantado (`./scripts/dev.sh`):
 
 ```bash
-./scripts/schema.sh                # aplica los cuatro esquemas
-./scripts/schema.sh crops          # solo uno
+./scripts/migrate.sh              # aplica todas las migraciones
 ```
 
-Los scripts son idempotentes: se pueden correr varias veces. Para ver las tablas de una base:
+Para entrar a la base:
 
 ```bash
 docker compose -f infra/docker-compose.yml --env-file .env exec postgres \
-  psql -U agrodoc -d crops_db -c '\dt'
+  psql -U agrodoc -d agrodoc_db -c '\dt'
 ```
 
-(cambia `agrodoc` por el valor de `POSTGRES_USER` en tu `.env`, y `crops_db` por la base que quieras ver).
+(cambia `agrodoc` por el valor de `POSTGRES_USER` en tu `.env`).
 
-Para empezar de cero con las bases vacías: `./scripts/reset-db.sh`.
+Para empezar de cero: `./scripts/reset-db.sh` y luego `./scripts/migrate.sh`.

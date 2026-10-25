@@ -1,0 +1,10 @@
+target-version = "py312"
+line-length = 100
+
+[lint]
+extend-select = ["I", "UP", "B"]
+
+[lint.isort]
+known-first-party = ["app"]
+# El directorio local `alembic/` no debe confundirse con el paquete instalado.
+known-third-party = ["alembic"]

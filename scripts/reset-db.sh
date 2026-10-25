@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# Borra el volumen de Postgres y vuelve a crear las bases desde cero.
-# Útil cuando cambias infra/postgres/init-databases.sh (solo corre con el volumen vacío).
+# Borra el volumen de Postgres y vuelve a crear la base de datos desde cero.
 # Uso: ./scripts/reset-db.sh
 source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
 
-echo "⚠  Esto BORRA todos los datos de Postgres (volumen pgdata) y recrea las bases."
+echo "⚠  Esto BORRA todos los datos de Postgres (volumen pgdata) y recrea la base."
 read -r -p "Escribe 'si' para continuar: " resp
 if [ "$resp" != "si" ]; then
   echo "Cancelado."
@@ -15,4 +14,5 @@ fi
 "${COMPOSE[@]}" up -d --build
 
 echo
-echo "Listo. Comprueba con: ./scripts/status.sh"
+echo "Listo. Aplica las migraciones con: ./scripts/migrate.sh"
+echo "Comprueba el estado con: ./scripts/status.sh"

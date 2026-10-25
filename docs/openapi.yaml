@@ -1,17 +1,21 @@
 openapi: 3.0.3
 info:
-  title: AgroDoc Microservices API
-  version: 1.0.0
+  title: AgroDoc API
+  version: 2.0.0
   description: |
-    Especificación de contratos API First para los microservicios de AgroDoc basándose en el diseño de PostgreSQL:
-    - **Auth Service** (Usuarios, Perfiles de Agrónomos y Sesiones)
-    - **Crops Service** (Fincas, Cultivos, Tipos de Cultivo y Eventos)
-    - **Diagnosis Service** (Detección de Plagas, Catálogo y Tratamientos)
-    - **Consultations Service** (Atención Experta por Agrónomos)
+    Contrato API First del monolito modular de AgroDoc. Los endpoints se agrupan
+    por slice vertical (un módulo por carpeta en `Backend/app/features/`):
+    - **auth** (Usuarios, Perfiles de Agrónomos y Sesiones)
+    - **crops** (Fincas, Cultivos, Tipos de Cultivo y Eventos)
+    - **diagnosis** (Detección de Plagas, Catálogo y Tratamientos)
+    - **consultations** (Atención Experta por Agrónomos)
+
+    `detection` no expone endpoints públicos: es un módulo interno que `diagnosis`
+    invoca en proceso.
 
 servers:
   - url: http://localhost:8000/api/v1
-    description: API Gateway local
+    description: API local (monolito)
 
 paths:
 
@@ -22,7 +26,7 @@ paths:
   /auth/register:
     post:
       tags:
-        - Auth Service
+        - auth
       summary: Registrar nuevo usuario
       description: Crea un nuevo usuario con rol agricultor o agrónomo.
       operationId: registerUser
@@ -47,7 +51,7 @@ paths:
   /auth/login:
     post:
       tags:
-        - Auth Service
+        - auth
       summary: Iniciar sesión
       operationId: loginUser
       requestBody:
@@ -69,7 +73,7 @@ paths:
   /auth/refresh:
     post:
       tags:
-        - Auth Service
+        - auth
       summary: Renovar token de acceso
       operationId: refreshToken
       requestBody:
@@ -96,7 +100,7 @@ paths:
   /auth/logout:
     post:
       tags:
-        - Auth Service
+        - auth
       summary: Cerrar sesión
       security:
         - BearerAuth: []
@@ -119,7 +123,7 @@ paths:
   /users/me:
     get:
       tags:
-        - Auth Service
+        - auth
       summary: Obtener perfil del usuario autenticado
       security:
         - BearerAuth: []
@@ -137,7 +141,7 @@ paths:
   /agronomists:
     get:
       tags:
-        - Auth Service
+        - auth
       summary: Listar agrónomos disponibles
       security:
         - BearerAuth: []
@@ -165,7 +169,7 @@ paths:
   /crop-types:
     get:
       tags:
-        - Crops Service
+        - crops
       summary: Listar catálogo de tipos de cultivo
       operationId: listCropTypes
       responses:
@@ -181,7 +185,7 @@ paths:
   /farms:
     get:
       tags:
-        - Crops Service
+        - crops
       summary: Listar fincas del usuario
       security:
         - BearerAuth: []
@@ -197,7 +201,7 @@ paths:
                   $ref: '#/components/schemas/Farm'
     post:
       tags:
-        - Crops Service
+        - crops
       summary: Crear una finca
       security:
         - BearerAuth: []
@@ -219,7 +223,7 @@ paths:
   /crops:
     get:
       tags:
-        - Crops Service
+        - crops
       summary: Listar cultivos del usuario
       security:
         - BearerAuth: []
@@ -248,7 +252,7 @@ paths:
                   $ref: '#/components/schemas/Crop'
     post:
       tags:
-        - Crops Service
+        - crops
       summary: Registrar nuevo cultivo
       security:
         - BearerAuth: []
@@ -270,7 +274,7 @@ paths:
   /crops/{id}:
     get:
       tags:
-        - Crops Service
+        - crops
       summary: Obtener detalle de un cultivo
       security:
         - BearerAuth: []
@@ -294,7 +298,7 @@ paths:
   /crops/{id}/events:
     get:
       tags:
-        - Crops Service
+        - crops
       summary: Listar bitácora de eventos del cultivo
       security:
         - BearerAuth: []
@@ -316,7 +320,7 @@ paths:
                   $ref: '#/components/schemas/CropEvent'
     post:
       tags:
-        - Crops Service
+        - crops
       summary: Agregar evento al historial del cultivo
       security:
         - BearerAuth: []
@@ -348,7 +352,7 @@ paths:
   /pests:
     get:
       tags:
-        - Diagnosis Service
+        - diagnosis
       summary: Catálogo de plagas y enfermedades
       parameters:
         - name: crop_type_code
@@ -370,7 +374,7 @@ paths:
   /pests/{id}:
     get:
       tags:
-        - Diagnosis Service
+        - diagnosis
       summary: Detalle de plaga con sus tratamientos sugeridos
       parameters:
         - name: id
@@ -389,12 +393,12 @@ paths:
   /diagnoses:
     post:
       tags:
-        - Diagnosis Service
+        - diagnosis
       summary: Diagnosticar foto de un cultivo (Inferencia + Guardado)
       description: |
-        Sube la foto de la planta con el `crop_id`. El servicio valida la propiedad del cultivo con `crops_db`, 
-        ejecuta la inferencia con el modelo ONNX (`detection`), calcula la confianza y si la confianza es baja 
-        escalea automáticamente a `consultations_db`.
+        Sube la foto de la planta con el `crop_id`. El módulo `diagnosis` valida la propiedad del cultivo
+        llamando a `crops.service`, ejecuta la inferencia con el modelo ONNX (`detection`), calcula la
+        confianza y, si es baja, escala automáticamente a `consultations.service` (todo en proceso).
       security:
         - BearerAuth: []
       requestBody:
@@ -429,7 +433,7 @@ paths:
 
     get:
       tags:
-        - Diagnosis Service
+        - diagnosis
       summary: Listar diagnósticos del usuario autenticado
       security:
         - BearerAuth: []
@@ -453,7 +457,7 @@ paths:
   /diagnoses/{id}:
     get:
       tags:
-        - Diagnosis Service
+        - diagnosis
       summary: Obtener un diagnóstico por ID
       security:
         - BearerAuth: []
@@ -481,7 +485,7 @@ paths:
   /consultations:
     get:
       tags:
-        - Consultations Service
+        - consultations
       summary: Listar consultas / casos escalados
       security:
         - BearerAuth: []
@@ -510,7 +514,7 @@ paths:
 
     post:
       tags:
-        - Consultations Service
+        - consultations
       summary: Escalar manualmente un diagnóstico a consulta
       security:
         - BearerAuth: []
@@ -537,7 +541,7 @@ paths:
   /consultations/{id}:
     get:
       tags:
-        - Consultations Service
+        - consultations
       summary: Detalle de una consulta
       security:
         - BearerAuth: []
@@ -558,7 +562,7 @@ paths:
 
     patch:
       tags:
-        - Consultations Service
+        - consultations
       summary: Actualizar / Asignar / Resolver consulta (Agrónomo)
       security:
         - BearerAuth: []
@@ -586,7 +590,7 @@ paths:
   /consultations/{id}/messages:
     get:
       tags:
-        - Consultations Service
+        - consultations
       summary: Ver mensajes de la conversación
       security:
         - BearerAuth: []
@@ -609,7 +613,7 @@ paths:
 
     post:
       tags:
-        - Consultations Service
+        - consultations
       summary: Enviar mensaje en la consulta
       security:
         - BearerAuth: []

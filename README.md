@@ -2,9 +2,9 @@
 
 AgroDoc es un ecosistema digital para el monitoreo agrícola y el diagnóstico temprano de plagas mediante Inteligencia Artificial. El usuario sube una foto de su cultivo, el sistema detecta la plaga y entrega un diagnóstico básico; si la confianza del modelo es baja, el caso se envía a un agrónomo para que lo revise. Además permite guardar y dar seguimiento a los cultivos.
 
-Este repositorio es un **monorepo** con arquitectura de **microservicios**: un frontend en React y varios servicios independientes en FastAPI, orquestados con Docker Compose.
+Este repositorio es un **monorepo** con un **monolito modular y vertical slicing**: un solo backend FastAPI organizado por módulos (features), un frontend React y un único Postgres, orquestados con Docker Compose.
 
-> **Estado actual:** la estructura, el entorno Docker y la base de datos están listos. Cada servicio expone por ahora solo un endpoint `/health`; la lógica de negocio se irá agregando servicio por servicio.
+> **Estado actual:** la estructura, el entorno Docker y la base de datos están listos. El API expone `/health` y un health por módulo; la lógica de negocio se irá agregando módulo por módulo.
 
 ## 👥 Equipo y roles
 
@@ -15,51 +15,73 @@ Este repositorio es un **monorepo** con arquitectura de **microservicios**: un f
 ## 🏗 Arquitectura
 
 ```mermaid
-flowchart LR
-    web[Frontend React] --> gw[Gateway :8000]
-    gw --> auth[auth]
-    gw --> crops[crops]
-    gw --> detection[detection]
-    gw --> diagnosis[diagnosis]
-    gw --> consultations[consultations]
-    diagnosis --> detection
-    auth --> pg[(Postgres)]
+flowchart TB
+    web[Frontend React] -->|/api/v1| api[API FastAPI<br/>un solo proceso]
+
+    subgraph slices[Features]
+        auth[auth]
+        crops[crops]
+        detection[detection]
+        diagnosis[diagnosis]
+        consultations[consultations]
+    end
+
+    api --> auth
+    api --> crops
+    api --> detection
+    api --> diagnosis
+    api --> consultations
+
+    auth --> pg[(agrodoc_db)]
     crops --> pg
     diagnosis --> pg
     consultations --> pg
     model[/ml/export/model.onnx/] -.-> detection
 ```
 
-El frontend solo habla con el **gateway**; los demás servicios se comunican entre sí por la red interna de Docker (por ejemplo `http://auth:8000`).
+* **Un solo desplegable de backend.** No hay gateway ni llamadas HTTP entre módulos: se llaman funciones de `service.py` en el mismo proceso.
+* **Una sola base de datos** (`agrodoc_db`). Cada tabla tiene un módulo dueño.
+* **Vertical slicing:** cada carpeta de `Backend/app/features/` contiene sus endpoints, su lógica y sus tablas.
 
-### Servicios
+El detalle de las reglas y del porqué de la decisión está en [`docs/arquitectura.md`](docs/arquitectura.md); el diseño de tablas, en [`docs/base-de-datos.md`](docs/base-de-datos.md).
 
-| Servicio | Responsabilidad | Base de datos | Puerto en dev |
-|---|---|---|---|
-| `gateway` | Punto de entrada único: enruta las peticiones y valida el token | — | 8000 |
-| `auth` | Usuarios, login y roles (agricultor / agrónomo) | `auth_db` | 8001 |
-| `crops` | Cultivos guardados por el usuario y su historial | `crops_db` | 8002 |
-| `detection` | Inferencia del modelo: imagen → plaga + nivel de confianza | — (carga el modelo desde `ml/export/`) | 8003 |
-| `diagnosis` | Convierte la plaga detectada en diagnóstico y recomendaciones | `diagnosis_db` | 8004 |
-| `consultations` | Casos enviados a agrónomos cuando la confianza es baja | `consultations_db` | 8005 |
-| `web` | Frontend (build de producción servido con nginx) | — | 3000 |
-| `postgres` | Un solo servidor con una base de datos por servicio | — | no se publica |
+### Módulos
 
-Regla importante: **cada servicio es dueño de su base de datos**. Ningún servicio consulta directamente las tablas de otro; si necesita un dato (por ejemplo el `user_id`), lo pide por API.
+| Módulo | Responsabilidad | Tablas |
+|---|---|---|
+| `auth` | Usuarios, login, sesiones y roles (agricultor / agrónomo) | `users`, `agronomist_profiles`, `refresh_tokens` |
+| `crops` | Fincas, cultivos guardados y su historial | `crop_types`, `farms`, `crops`, `crop_events` |
+| `detection` | Inferencia del modelo: imagen → plaga + confianza | — (carga `ml/export/model.onnx`) |
+| `diagnosis` | Convierte la detección en diagnóstico y recomendaciones | `pests`, `pest_crops`, `treatments`, `diagnoses` |
+| `consultations` | Casos enviados a agrónomos cuando la confianza es baja | `consultations`, `consultation_messages` |
+
+### Reglas de dependencia
+
+1. Nadie importa el `router.py` de otro módulo (salvo `app/main.py` para montarlo).
+2. Nadie importa `models.py` ni `repository.py` de otro módulo. Si necesitas datos, usa su `service.py`.
+3. `core/` y `shared/` no conocen a los módulos.
+4. Entre módulos no hay HTTP: son llamadas directas dentro del proceso.
 
 ## 📁 Estructura del repositorio
 
 ```
 AgroDoc/
-├── Backend/
-│   ├── common/              # Código compartido entre servicios (mantenerlo mínimo)
-│   └── services/
-│       ├── gateway/
-│       ├── auth/
-│       ├── crops/
-│       ├── detection/
-│       ├── diagnosis/
-│       └── consultations/
+├── Backend/                 # monolito FastAPI
+│   ├── app/
+│   │   ├── main.py          # crea la app y monta los routers
+│   │   ├── core/            # config, base de datos, seguridad, errores
+│   │   ├── shared/          # kernel mínimo compartido
+│   │   └── features/        # ← vertical slices
+│   │       ├── auth/
+│   │       ├── crops/
+│   │       ├── detection/
+│   │       ├── diagnosis/
+│   │       └── consultations/
+│   ├── alembic/             # una sola historia de migraciones
+│   ├── tests/
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── requirements-dev.txt
 ├── Frontend/                # React + Vite (JavaScript), gestionado con pnpm
 ├── ml/                      # Entrenamiento del modelo (no se despliega)
 │   ├── notebooks/           # Exploración y experimentos
@@ -67,35 +89,28 @@ AgroDoc/
 │   ├── export/              # Modelo exportado (ONNX) que usa `detection`
 │   └── datasets/            # Datos (NO se suben a git)
 ├── infra/
-│   ├── docker-compose.yml       # Definición base de todos los servicios
-│   ├── docker-compose.dev.yml   # Override de desarrollo (recarga en caliente, puertos abiertos)
-│   ├── postgres/                # Script que crea las bases de datos al iniciar
+│   ├── docker-compose.yml       # API + Postgres + frontend
+│   ├── docker-compose.dev.yml   # Override de desarrollo (recarga en caliente)
 │   └── nginx/                   # Reservada para configuración de nginx
-├── docs/                    # Documentación adicional
+├── docs/                    # Arquitectura, base de datos y contrato OpenAPI
 ├── scripts/                 # Scripts bash para el día a día (ver abajo)
 ├── .env.example             # Plantilla de variables de entorno
 └── README.md
 ```
 
-### Estructura interna de cada servicio
-
-Todos los servicios de FastAPI tienen el mismo esquema, para que cualquiera pueda moverse entre ellos:
+### Estructura interna de un módulo
 
 ```
-Backend/services/<servicio>/
-├── app/
-│   ├── main.py          # Punto de entrada de FastAPI (incluye /health)
-│   ├── api/routes/      # Endpoints
-│   ├── core/            # Configuración y seguridad
-│   ├── db/              # Sesión y modelos de base de datos
-│   ├── schemas/         # Esquemas Pydantic (entrada/salida)
-│   ├── services/        # Lógica de negocio
-│   └── clients/         # Llamadas HTTP a otros servicios
-├── alembic/             # Migraciones (reservada, falta configurarla)
-├── tests/
-├── requirements.txt
-└── Dockerfile
+Backend/app/features/<modulo>/
+├── __init__.py
+├── router.py       # endpoints HTTP
+├── service.py      # casos de uso (API pública del módulo)
+├── models.py       # tablas SQLAlchemy (si tiene base de datos)
+├── schemas.py      # esquemas Pydantic (cuando haga falta)
+└── repository.py   # consultas a la base (cuando haga falta)
 ```
+
+`detection` no tiene `models.py` ni `repository.py` porque no guarda datos. `schemas.py` y `repository.py` se crean solo cuando el módulo los necesita.
 
 ## ✅ Requisitos
 
@@ -104,7 +119,7 @@ Backend/services/<servicio>/
 * `curl` (lo usa `scripts/status.sh`)
 * Opcional, para trabajar fuera de Docker:
   * Node.js 22+ y pnpm (`corepack enable`) para el frontend
-  * Python 3.12 para los servicios
+  * Python 3.12 para el backend
 
 ## 🚀 Inicio rápido
 
@@ -113,16 +128,18 @@ git clone https://github.com/maferodri/AgroDoc.git
 cd AgroDoc
 chmod +x scripts/*.sh      # solo la primera vez
 ./scripts/dev.sh           # construye y levanta todo
+./scripts/migrate.sh       # aplica las migraciones (cuando existan)
 ./scripts/status.sh        # comprueba que todo responda
 ```
 
-Si todo está bien, verás un ✔ por cada servicio y podrás abrir:
+Si todo está bien, verás un ✔ por el API, por cada módulo y por el frontend. Podrás abrir:
 
 * Web: http://localhost:3000
-* Gateway: http://localhost:8000/health
-* Documentación automática de cada servicio (Swagger): `http://localhost:800X/docs` (por ejemplo http://localhost:8001/docs para `auth`)
+* API: http://localhost:8000/health
+* Swagger (todos los módulos): http://localhost:8000/docs
+* Health por módulo: `http://localhost:8000/api/v1/<modulo>/health` (por ejemplo http://localhost:8000/api/v1/auth/health)
 
-La primera vez tarda unos minutos porque descarga imágenes y construye cada servicio. El script crea el archivo `.env` automáticamente a partir de `.env.example` si no existe.
+La primera vez tarda unos minutos porque descarga imágenes y construye el entorno. El script crea el archivo `.env` automáticamente a partir de `.env.example` si no existe.
 
 ## 🛠 Scripts
 
@@ -132,35 +149,53 @@ Todos se ejecutan desde cualquier carpeta del repo, por ejemplo `./scripts/dev.s
 |---|---|
 | `scripts/dev.sh [servicio...]` | Levanta el entorno de desarrollo. Sin argumentos levanta todo. |
 | `scripts/down.sh` | Apaga y elimina los contenedores (los datos de Postgres se conservan). |
-| `scripts/status.sh` | Lista los contenedores y comprueba el `/health` de cada servicio. |
-| `scripts/logs.sh [servicio]` | Sigue los logs en vivo. Ejemplo: `./scripts/logs.sh auth`. |
+| `scripts/status.sh` | Lista los contenedores y comprueba el API, cada módulo y la web. |
+| `scripts/logs.sh [servicio]` | Sigue los logs en vivo. Ejemplo: `./scripts/logs.sh api`. |
 | `scripts/rebuild.sh <servicio>` | Reconstruye un servicio. Úsalo si cambias `requirements.txt`, `package.json` o un Dockerfile. |
-| `scripts/reset-db.sh` | **Borra** los datos de Postgres y recrea las bases desde cero (pide confirmación). |
+| `scripts/migrate.sh` | Aplica las migraciones de Alembic. Con `-m "mensaje"` genera una revisión autogenerada. |
+| `scripts/reset-db.sh` | **Borra** los datos de Postgres y recrea la base desde cero (pide confirmación). |
 
 ## 💻 Flujo de trabajo por rol
 
 ### Backend (FastAPI)
 
-En desarrollo, el código de cada servicio está montado dentro del contenedor y uvicorn corre con `--reload`: al guardar un archivo en `Backend/services/<servicio>/app/`, el servicio se recarga solo.
+En desarrollo, el código de `Backend/` está montado dentro del contenedor y uvicorn corre con `--reload`: al guardar un archivo en `Backend/app/`, el API se recarga solo. Si un módulo tiene un error de importación, el proceso completo no arranca (es un monolito): revisa `./scripts/logs.sh api`.
 
-* **Agregar una dependencia:** añádela a `requirements.txt` del servicio y ejecuta `./scripts/rebuild.sh <servicio>`.
-* **Ver errores:** `./scripts/logs.sh <servicio>`.
-* **Probar un servicio directo:** cada uno tiene su puerto (tabla de servicios) y su Swagger en `/docs`.
-* **Variables de entorno:** cada servicio recibe `DATABASE_URL` (y las URLs de otros servicios) desde `infra/docker-compose.yml`. Si necesitas una nueva, agrégala ahí.
+* **Implementar un endpoint:** agrégalo en `features/<modulo>/router.py` y la lógica en `features/<modulo>/service.py`. El contrato está en [`docs/openapi.yaml`](docs/openapi.yaml).
+* **Agregar una dependencia:** añádela a `Backend/requirements.txt` y ejecuta `./scripts/rebuild.sh api`.
+* **Ver errores:** `./scripts/logs.sh api`.
+* **Probar el API:** http://localhost:8000/docs (Swagger) o http://localhost:8000/api/v1/<modulo>/health.
+* **Variables de entorno:** el API recibe `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGINS`, `MODEL_PATH` y `CONFIDENCE_THRESHOLD` desde `infra/docker-compose.yml`. Si necesitas una nueva, agrégala en `app/core/config.py` y en el compose.
 * **Entrar a la base de datos:**
 
   ```bash
-  docker compose -f infra/docker-compose.yml --env-file .env exec postgres psql -U agrodoc -d crops_db
+  docker compose -f infra/docker-compose.yml --env-file .env exec postgres psql -U agrodoc -d agrodoc_db
   ```
 
-  (cambia `crops_db` por la base que necesites; el usuario es el valor de `POSTGRES_USER` en tu `.env`).
+  (el usuario es el valor de `POSTGRES_USER` en tu `.env`).
+* **Migraciones:**
+
+  ```bash
+  ./scripts/migrate.sh                       # aplica todo
+  ./scripts/migrate.sh -m "crear users"      # autogenera una revisión
+  ```
+
+  Revisa siempre el archivo generado en `Backend/alembic/versions/` antes de aplicarlo.
+* **Tests:**
+
+  ```bash
+  cd Backend
+  python -m venv .venv && source .venv/bin/activate
+  pip install -r requirements-dev.txt
+  pytest
+  ```
 * **Trabajar sin Docker (opcional):**
 
   ```bash
-  cd Backend/services/crops
+  cd Backend
   python -m venv .venv && source .venv/bin/activate
   pip install -r requirements.txt
-  uvicorn app.main:app --reload --port 8002
+  uvicorn app.main:app --reload --port 8000
   ```
 
 ### Frontend (React)
@@ -176,55 +211,60 @@ pnpm dev                 # http://localhost:5173
 
 Otros comandos: `pnpm build` (compilar) y `pnpm lint` (oxlint).
 
-La API se consume a través del **gateway** (`http://localhost:8000`). Cuando el gateway tenga rutas, habrá que habilitar CORS para `http://localhost:5173`.
+La API se consume en `http://localhost:8000/api/v1`. El API ya permite CORS para `http://localhost:5173` y `http://localhost:3000`.
 
 > Este proyecto usa **pnpm**. No uses `npm install` ni `yarn`: generan otro lockfile y rompen el build de Docker (`--frozen-lockfile`).
 
 ### IA / Modelo
 
 * El entrenamiento y los experimentos viven en `ml/` y **no** forman parte de las imágenes de Docker.
-* El servicio `detection` carga el modelo desde `ml/export/model.onnx` (montado como volumen en `/models`, variable `MODEL_PATH`). Para probar un modelo nuevo basta con reemplazar ese archivo y reiniciar el servicio: `./scripts/rebuild.sh detection`.
+* El módulo `detection` carga el modelo desde `ml/export/model.onnx` (montado como volumen en `/models`, variable `MODEL_PATH`). Para probar un modelo nuevo basta con reemplazar ese archivo y reiniciar el API: `./scripts/rebuild.sh api`.
 * Los datasets (`ml/datasets/`) y los modelos (`*.onnx`, `*.pt`) están en el `.gitignore` y **no se suben al repositorio**. Hay que compartirlos por otro medio (Drive, release, etc.).
 
 ## 🗄 Base de datos
 
-Hay un único servidor Postgres con una base por servicio: `auth_db`, `crops_db`, `diagnosis_db` y `consultations_db`. Se crean con `infra/postgres/init-databases.sh`.
+Hay un único servidor Postgres con una base, `agrodoc_db`, que se crea automáticamente al iniciar el contenedor (`POSTGRES_DB`). El esquema se gestiona con Alembic; el diseño de referencia está en [`docs/base-de-datos.md`](docs/base-de-datos.md).
 
-* Ese script **solo corre cuando el volumen está vacío** (la primera vez). Si lo modificas o agregas una base nueva, ejecuta `./scripts/reset-db.sh` (borra los datos) o créala a mano.
-* Postgres no se publica en tu máquina; solo los servicios lo ven por la red interna.
+* Postgres no se publica en tu máquina; solo el API lo ve por la red interna.
 * Los datos se guardan en el volumen `agrodoc_pgdata`, así que sobreviven a `./scripts/down.sh`.
+* Si cambias el esquema: `./scripts/migrate.sh -m "mensaje"` y luego `./scripts/migrate.sh`.
+* Para empezar de cero con la base vacía: `./scripts/reset-db.sh` y después `./scripts/migrate.sh`.
 
-## ➕ Agregar un servicio nuevo
+## ➕ Agregar un módulo nuevo
 
-1. Copia la estructura de otro servicio en `Backend/services/<nuevo>/` (con su `Dockerfile` y `requirements.txt`).
-2. Añádelo a `infra/docker-compose.yml` y a `infra/docker-compose.dev.yml` (con un puerto libre).
-3. Si necesita base de datos, agrégala a la lista de `infra/postgres/init-databases.sh` y a su `DATABASE_URL`.
-4. Registra su URL en las variables del `gateway`.
-5. Actualiza `SERVICES` en `scripts/_common.sh` y el mapa de puertos de `scripts/status.sh`.
+1. Crea `Backend/app/features/<nuevo>/` con `__init__.py`, `router.py` y `service.py`.
+2. Si tiene tablas, agrega `models.py` (y `repository.py` si hace falta) y define ahí sus tablas.
+3. Importa sus modelos en `Backend/alembic/env.py` para que `--autogenerate` los detecte.
+4. Monta su router en `Backend/app/main.py` (`ROUTERS`).
+5. Añádelo a `API_MODULES` en `scripts/_common.sh`.
+6. Documenta sus endpoints en `docs/openapi.yaml`.
+
+No hay que tocar puertos, contenedores ni variables de entorno entre servicios.
 
 ## 📏 Convenciones
 
 * **Frontend:** React con JavaScript, linter **oxlint**, gestor **pnpm** (versión fijada en `packageManager`).
-* **Backend:** una carpeta por servicio con la estructura de arriba; sin acceso cruzado entre bases de datos.
+* **Backend:** un directorio por módulo en `app/features/`; sin acceso cruzado a tablas ni a modelos.
 * **Secretos:** nunca subas `.env`. Las plantillas van en `.env.example`.
 * **Dependencias:** nunca commitees `node_modules`, `.venv`, datasets ni modelos.
 * **Git:** se recomienda trabajar en ramas por funcionalidad (`feature/<area>-<descripcion>`) y hacer pull request hacia `main`, en lugar de commitear directo.
 
 ## 🩹 Problemas comunes
 
-* **El puerto ya está en uso:** algo más usa 3000 u 8000-8005. Detenlo o cambia el puerto en `infra/docker-compose.yml`.
-* **Un servicio no responde:** `./scripts/logs.sh <servicio>` muestra el error. Si cambiaste dependencias, usa `./scripts/rebuild.sh <servicio>`.
+* **El puerto ya está en uso:** algo más usa 3000 u 8000. Detenlo o cambia el puerto en `infra/docker-compose.yml`.
+* **El API no responde:** `./scripts/logs.sh api` muestra el error de importación o de conexión. Si cambiaste dependencias, usa `./scripts/rebuild.sh api`.
 * **Cambié `.env` y no se aplica:** reinicia con `./scripts/down.sh` y luego `./scripts/dev.sh`.
-* **`Permission denied` en los volúmenes (Fedora/SELinux):** agrega `:z` al final de los volúmenes montados en `infra/docker-compose.dev.yml` (por ejemplo `"../Backend/services/auth:/code:z"`).
+* **`Permission denied` en los volúmenes (Fedora/SELinux):** agrega `:z` al final de los volúmenes montados en `infra/docker-compose.dev.yml` (por ejemplo `"../Backend:/code:z"`).
+* **Alembic no ve mis tablas:** revisa que el `models.py` del módulo esté importado en `Backend/alembic/env.py`.
+* **Vengo de la versión de microservicios:** el volumen viejo conserva `auth_db`, `crops_db`, etc., pero no `agrodoc_db`. Ejecuta `./scripts/reset-db.sh` (borra los datos) o crea la base a mano y aplica las migraciones.
 * **Quiero empezar de cero:** `./scripts/down.sh`, y si también quieres borrar los datos, `./scripts/reset-db.sh`.
 
 ## 🗺 Próximos pasos
 
-- [ ] Gateway: enrutado hacia los servicios y validación de token
 - [ ] `auth`: registro, login (JWT) y roles
-- [ ] Configurar Alembic y crear los modelos de cada servicio
+- [ ] Modelos SQLAlchemy y migración inicial de cada módulo
 - [ ] `crops`: CRUD de cultivos e historial
-- [ ] `detection`: carga del modelo ONNX y endpoint de inferencia
+- [ ] `detection`: carga del modelo ONNX y función de inferencia
 - [ ] `diagnosis` y `consultations`: flujo de baja confianza hacia agrónomos
-- [ ] CORS para el frontend en desarrollo
+- [ ] Guardianes de autenticación reutilizables (`Depends`) en `app/core`
 - [ ] Linter y formateador para Python (por ejemplo Ruff)

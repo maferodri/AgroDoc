@@ -16,7 +16,14 @@ if [ ! -f .env ]; then
   echo "→ Se creó .env a partir de .env.example (cambia la contraseña si hace falta)."
 fi
 
-SERVICES=(gateway auth crops detection diagnosis consultations)
+# Servicios del stack (monolito + base de datos + frontend)
+SERVICES=(postgres api web)
 
-# Compose base + override de desarrollo (recarga en caliente y puertos abiertos)
+# Slices verticales del monolito (se comprueban en /api/v1/<modulo>/health)
+API_MODULES=(auth crops detection diagnoses consultations)
+
+API_PORT=8000
+WEB_PORT=3000
+
+# Compose base + override de desarrollo (recarga en caliente y puerto abierto)
 COMPOSE=(docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml --env-file .env)
