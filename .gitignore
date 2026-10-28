@@ -9,3 +9,4 @@ ml/datasets/
 *.onnx
 *.pt
 .venv/
+.continue/
