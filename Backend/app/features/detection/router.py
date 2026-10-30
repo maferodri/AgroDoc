@@ -1,3 +1,4 @@
+
 """Endpoints HTTP del módulo detection.
 
 La inferencia se consume desde el módulo `diagnosis`, no desde el frontend,
@@ -12,6 +13,10 @@ from app.shared.schemas import ModuleHealth
 router = APIRouter(tags=["detection"])
 
 
-@router.get("/detection/health", response_model=ModuleHealth, summary="Estado del módulo detection")
+@router.get(
+    "/detection/health",
+    response_model=ModuleHealth,
+    summary="Estado del módulo detection",
+)
 def module_health() -> ModuleHealth:
     return service.health()
