@@ -1,0 +1,9 @@
+{
+    "radius": {
+        "sm": { "value": "8" },
+        "md": { "value": "12" },
+        "lg": { "value": "16" },
+        "xl": { "value": "25" },
+        "full": { "value": "9999" }
+    }
+}

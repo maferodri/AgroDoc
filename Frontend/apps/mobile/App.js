@@ -1,3 +1,7 @@
+/**
+ * Documento: raíz de la app móvil (template Expo).
+ * Pantalla inicial pendiente de conectar al tema y a @agrodoc/ui.
+ */
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
 

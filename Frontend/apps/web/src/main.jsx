@@ -1,3 +1,7 @@
+/**
+ * Documento: punto de entrada del cliente web.
+ * Monta React en #root dentro de StrictMode.
+ */
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
