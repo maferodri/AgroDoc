@@ -1,3 +1,7 @@
+/**
+ * Documento: estilos del átomo Button.
+ * Genera variantes y estados a partir de los tokens del tema.
+ */
 import { StyleSheet } from 'react-native';
 
 export const getStyles = ({ colors, spacing, radius, typography }) => {
@@ -6,6 +10,8 @@ export const getStyles = ({ colors, spacing, radius, typography }) => {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
+        alignSelf: 'flex-start',
+        gap: spacing.xs,
         paddingVertical: spacing.buttonY,
         paddingHorizontal: spacing.buttonX,
         borderRadius: radius.button,

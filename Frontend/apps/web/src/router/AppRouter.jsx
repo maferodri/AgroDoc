@@ -1,5 +1,7 @@
-// apps/web/src/router/AppRouter.jsx
-import React from 'react';
+/**
+ * Documento: rutas de la app web.
+ * Registra el Playground únicamente en desarrollo.
+ */
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Playground from '../pages/Playground';   // 👈 import arriba
 

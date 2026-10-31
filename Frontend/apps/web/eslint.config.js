@@ -1,3 +1,7 @@
+/**
+ * Documento: configuración de ESLint de la app web.
+ * Aplica reglas recomendadas de JavaScript, hooks y Fast Refresh.
+ */
 import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'

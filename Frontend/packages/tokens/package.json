@@ -1,1 +1,1 @@
-{"name":"@agrodoc/tokens","version":"0.0.1","main":"index.js","devDependencies":{"style-dictionary":"^5.6.0"}}
+{"name":"@agrodoc/tokens","version":"0.0.1","main":"index.js","scripts":{"build":"style-dictionary build"},"devDependencies":{"style-dictionary":"^5.6.0"}}

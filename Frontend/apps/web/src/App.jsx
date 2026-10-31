@@ -1,5 +1,7 @@
-// apps/web/src/App.jsx
-import React from 'react';
+/**
+ * Documento: raíz de la app web.
+ * Compone el proveedor de tema y el router de la aplicación.
+ */
 import { ThemeProvider } from '@agrodoc/ui';
 import { light } from '@agrodoc/tokens';
 import AppRouter from './router/AppRouter';

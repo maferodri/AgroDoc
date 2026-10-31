@@ -1,3 +1,7 @@
+/**
+ * Documento: punto de entrada de la app móvil.
+ * Registra el componente raíz con Expo para Expo Go y builds nativos.
+ */
 import { registerRootComponent } from 'expo';
 
 import App from './App';

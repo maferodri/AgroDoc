@@ -1,3 +1,7 @@
+/**
+ * Documento: hook de acceso al tema.
+ * Devuelve el tema del contexto y falla si falta el ThemeProvider.
+ */
 import { useContext } from 'react';
 import { ThemeContext } from './ThemeProvider';
 
