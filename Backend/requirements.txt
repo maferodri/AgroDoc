@@ -6,3 +6,6 @@ psycopg[binary]>=3.2
 alembic>=1.13
 pyjwt>=2.9
 pwdlib[argon2]>=0.2
+onnxruntime
+pillow
+numpy
