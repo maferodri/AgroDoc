@@ -5,6 +5,7 @@
 export { ThemeProvider } from './src/theme/ThemeProvider';
 export { useTheme } from './src/theme/useTheme';
 export { AGRODOC_LOGO } from './src/assets/agrodocLogo';
+export { LOGIN_BACKGROUND } from './src/assets/backgroundLogin';
 export { Avatar } from './src/atoms/Avatar/Avatar';
 export { AVATAR_SIZE_TOKENS } from './src/atoms/Avatar/Avatar.styles';
 export { Button } from './src/atoms/Button/Button';
@@ -21,3 +22,4 @@ export { PasswordInput } from './src/molecules/PasswordInput/PasswordInput';
 export { CheckboxInput } from './src/molecules/CheckboxInput/CheckboxInput';
 export { OrDivider } from './src/molecules/OrDivider/OrDivider';
 export { StepIndicator } from './src/molecules/StepIndicator/StepIndicator';
+export { LoginForm } from './src/organisms/LoginForm/LoginForm';

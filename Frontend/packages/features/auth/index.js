@@ -32,6 +32,7 @@ export {
 } from './hooks/queryKeys.js';
 export { useCurrentUser } from './hooks/useCurrentUser.js';
 export { useLogin } from './hooks/useLogin.js';
+export { useLoginForm } from './hooks/useLoginForm.js';
 export { useLogout } from './hooks/useLogout.js';
 export { useRefreshSession } from './hooks/useRefreshSession.js';
 export { useRegister } from './hooks/useRegister.js';

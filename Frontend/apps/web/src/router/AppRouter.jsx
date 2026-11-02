@@ -1,16 +1,19 @@
 /**
  * Documento: rutas de la app web.
- * Registra el Playground únicamente en desarrollo.
+ * Expone el login como vista pública, redirige la raíz y registra el
+ * Playground únicamente en desarrollo.
  */
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Playground from '../pages/Playground';   // 👈 import arriba
+import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom';
+import Login from '../pages/auth/Login';
+import Playground from '../pages/Playground';
 
 export default function AppRouter() {
     return (
         <BrowserRouter>
         <Routes>
             {/* Rutas públicas */}
-            {/* <Route path="/login" element={<LoginPage />} /> */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/login" element={<Login />} />
 
             {/* 👇 Solo en desarrollo, fuera de ProtectedRoute */}
             {import.meta.env.DEV && (

@@ -18,6 +18,7 @@ import { getStyles } from './PasswordInput.styles';
  * @param {string} [helperText] Mensaje de ayuda.
  * @param {boolean} [required] Marca el campo como obligatorio.
  * @param {string} [placeholder] Texto de ejemplo dentro del campo.
+ * @param {React.ReactNode} [labelAccessory] Acción alineada a la derecha de la etiqueta.
  */
 export function PasswordInput({
     label,
@@ -27,6 +28,7 @@ export function PasswordInput({
     helperText,
     required = false,
     placeholder,
+    labelAccessory,
     ...rest
 }) {
     const theme = useTheme();
@@ -46,6 +48,7 @@ export function PasswordInput({
             error={error}
             helperText={helperText}
             required={required}
+            labelAccessory={labelAccessory}
             secureTextEntry={!visible}
             trailing={
                 <Pressable

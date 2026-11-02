@@ -1,24 +1,29 @@
 /**
- * Documento: raíz de la app móvil (template Expo).
- * Pantalla inicial pendiente de conectar al tema y a @agrodoc/ui.
+ * Documento: raíz de la app móvil.
+ * Compone el tema claro, React Query y la primera pantalla (login).
  */
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from '@agrodoc/ui';
+import { light } from '@agrodoc/tokens';
+import LoginScreen from './src/screens/auth/LoginScreen';
 
 export default function App() {
+  // Se crea una sola instancia por montaje para conservar la caché de auth.
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: { retry: 1 },
+        },
+      })
+  );
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <ThemeProvider theme={light}>
+      <QueryClientProvider client={queryClient}>
+        <LoginScreen />
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

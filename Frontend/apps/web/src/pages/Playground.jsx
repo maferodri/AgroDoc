@@ -17,6 +17,7 @@ import {
     Icon,
     ICON_NAMES,
     Input,
+    LoginForm,
     OrDivider,
     PasswordInput,
     StepIndicator,
@@ -664,6 +665,77 @@ const StepIndicatorDemo = () => {
     );
 };
 
+/** Ejemplo interactivo del organismo LoginForm en sus dos variantes. */
+const LoginFormPreview = ({ variant }) => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    // Simula el envío para revisar el estado de carga del botón principal.
+    const handleSubmit = () => {
+        setLoading(true);
+        setTimeout(() => {
+            setLoading(false);
+            alert(
+                `Iniciar sesión · ${email || 'sin correo'} · ${
+                    password ? 'contraseña capturada' : 'sin contraseña'
+                }`
+            );
+        }, 600);
+    };
+
+    return (
+        <LoginForm
+            variant={variant}
+            email={email}
+            password={password}
+            onChangeEmail={setEmail}
+            onChangePassword={setPassword}
+            onSubmit={handleSubmit}
+            onForgotPassword={() => alert('Recuperar contraseña')}
+            onRegister={() => alert('Crear cuenta')}
+            loading={loading}
+        />
+    );
+};
+
+const LoginFormDemo = () => {
+    const theme = useTheme();
+
+    return (
+        <>
+            <SubTitle>Web (tarjeta sobre fondo del catálogo)</SubTitle>
+            {/* El fondo gris permite ver la tarjeta sin simular una página blanca. */}
+            <View
+                style={{
+                    backgroundColor: theme.colors.background,
+                    borderRadius: theme.radius.card,
+                    padding: theme.spacing.lg,
+                    alignItems: 'center',
+                }}
+            >
+                <View style={{ width: '100%', maxWidth: 420 }}>
+                    <LoginFormPreview variant="web" />
+                </View>
+            </View>
+
+            <SubTitle>Móvil (sin tarjeta)</SubTitle>
+            <View
+                style={{
+                    backgroundColor: theme.colors.surface,
+                    borderRadius: theme.radius.card,
+                    padding: theme.spacing.lg,
+                    alignItems: 'center',
+                }}
+            >
+                <View style={{ width: '100%', maxWidth: 380 }}>
+                    <LoginFormPreview variant="mobile" />
+                </View>
+            </View>
+        </>
+    );
+};
+
 export default function Playground() {
     const theme = useTheme();
 
@@ -856,6 +928,10 @@ export default function Playground() {
                     title="Organismos"
                     description="Secciones completas formadas por átomos y moléculas."
                 >
+                    <CatalogItem name="LoginForm">
+                        <LoginFormDemo />
+                    </CatalogItem>
+
                     <ComingSoon>
                         card de cultivo, header y navegación.
                     </ComingSoon>

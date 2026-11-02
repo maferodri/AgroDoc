@@ -5,6 +5,24 @@ Al terminar una tarea, actualizar este archivo (ver **Mantenimiento de este arch
 Contexto amplio: `../docs/AgroDoc_Frontend_Estructura.md`.
 Si trabajas en `apps/mobile`, lee también `apps/mobile/AGENTS.md` (reglas de Expo).
 
+## Contexto obligatorio con graphify
+
+**Toda tarea empieza consultando el grafo de conocimiento**, no leyendo el código a ciegas.
+El grafo vive en `graphify-out/` y sus reglas en `.agents/rules/graphify.md`
+(`trigger: always_on`); el flujo está en `.agents/workflows/graphify.md`.
+
+Antes de explorar o modificar archivos:
+
+1. `graphify query "<pregunta>"` para ubicar código y arquitectura (o `query_graph` por MCP).
+2. `graphify path "<A>" "<B>"` para relaciones y `graphify explain "<concepto>"` para un nodo.
+3. Si existe `graphify-out/wiki/index.md`, navegar la wiki antes que leer archivos crudos.
+4. Usar `graphify-out/GRAPH_REPORT.md` solo para revisión de arquitectura amplia o cuando
+   query/path/explain no alcancen.
+
+Si `graphify-out/graph.json` no existe, generarlo con `graphify .` antes de continuar.
+Tras modificar código, ejecutar `graphify update .` (solo AST, sin costo de API) para mantener
+el grafo al día. El grafo es la fuente de contexto; este archivo solo resume reglas y estado.
+
 ## Reglas no negociables
 
 - **JavaScript** (`.js` / `.jsx`). No TypeScript, no archivos `.ts` / `.tsx`.
@@ -81,9 +99,9 @@ pnpm --filter @agrodoc/mobile start
 | Nuevo token | `packages/tokens/src/{primitives,semantic}/` + build |
 | Nuevo átomo | `packages/ui/src/atoms/X/` + exportar en `packages/ui/index.js` |
 | Probar visualmente | `apps/web/src/pages/Playground.jsx` (catálogo por niveles) |
-| Nueva página web | `apps/web/src/pages/` + ruta en `apps/web/src/router/AppRouter.jsx` |
-| Tema / contexto | `packages/ui/src/theme/` |
-| Pantalla móvil | `apps/mobile/` (seguir `apps/mobile/AGENTS.md`) |
+| Nueva página web | `apps/web/src/pages/<área>/` + ruta en `apps/web/src/router/AppRouter.jsx` |
+| Nueva pantalla móvil | `apps/mobile/src/screens/<área>/` |
+| Lógica de una épica | `packages/features/<épica>/` (hooks, esquemas, servicios) |
 
 ## Estado actual
 
@@ -91,62 +109,42 @@ pnpm --filter @agrodoc/mobile start
 |---|---|---|
 | Tokens | ✅ | build exporta valores planos y números |
 | Tema | ✅ | `ThemeProvider` + `useTheme` |
-| UI átomos | 🟡 | `Button`, `Input`, `Icon`, `Avatar`, `Text`, `Checkbox`, `DynamicBar`, `Divider` |
-| UI assets | ✅ | logotipo AgroDoc (`AGRODOC_LOGO`) con SVG en web y PNG en móvil |
+| UI atoms | 🟡 | `Button`, `Input`, `Icon`, `Avatar`, `Text`, `Checkbox`, `DynamicBar`, `Divider` |
+| UI assets | ✅ | logotipo (`AGRODOC_LOGO`) y fondos de auth (`LOGIN_BACKGROUND`) |
 | UI moléculas | 🟡 | `FormField`, `PasswordInput`, `CheckboxInput`, `StepIndicator`, `OrDivider` |
+| UI organismos | 🟡 | `LoginForm` con variantes `mobile`/`web`; falta el resto de organismos |
 | Playground web | ✅ | catálogo por niveles con cabeceras grandes |
-| App web | 🟡 | rutas base + Playground |
-| App móvil | ⏳ | template Expo, sin tema ni Button |
-| Feature auth | 🟡 | esquemas, servicios, hooks, store y `RoleGuard`; falta conectar providers |
+| App web | 🟡 | rutas base, login en `/login` y Playground |
+| App móvil | 🟡 | login con tema y React Query; falta navegación |
+| Feature auth | 🟡 | esquemas, servicios, hooks (incl. `useLoginForm`), store y `RoleGuard`; falta registro y recuperación |
 | api / store / utils | 🟡 | `@agrodoc/api` tiene cliente HTTP; store y utils siguen vacíos |
 
 ## Mantenimiento de este archivo
 
 Todo agente debe actualizarlo al terminar una tarea que cambie el proyecto:
 
-1. **Bitácora**: agregar una línea al inicio (más reciente primero) con `YYYY-MM-DD · área: cambio`. No borrar ni reescribir entradas anteriores.
-2. **Estado actual**: actualizar solo si cambió el estado real de un área (✅ / 🟡 / ⏳).
-3. **Pendientes**: quitar lo completado y agregar lo nuevo.
-4. **Reglas / estructura / comandos / trampas**: modificar solo si el cambio afecta cómo se trabaja.
-5. **Playground**: si creaste o modificaste un componente visual, actualizarlo en `apps/web/src/pages/Playground.jsx` bajo su categoría.
+1. **Estado actual**: actualizar solo si cambió el estado real de un área (✅ / 🟡 / ⏳).
+2. **Pendientes**: quitar lo completado y agregar lo nuevo.
+3. **Reglas / estructura / comandos / trampas**: modificar solo si el cambio afecta cómo se trabaja.
+4. **Playground**: si creaste o modificaste un componente visual, actualizarlo en `apps/web/src/pages/Playground.jsx` bajo su categoría.
+5. **Grafo**: ejecutar `graphify update .` para reflejar los cambios de código.
 
 Reglas de escritura:
 
-- Máximo ~5 líneas nuevas por tarea; una sola línea por hito.
+- Sin bitácora ni historial de cambios: este archivo describe el presente, no el pasado.
 - No incluir crónicas, diffs, código ni historial de conversaciones.
 - Si el archivo supera ~150 líneas, consolidar secciones en vez de seguir agregando.
 - Si el código y este archivo difieren, **corregir este archivo** antes de finalizar.
 
-## Bitácora ligera
-
-- `2026-10-31` · **Auth**: feature con esquemas Zod del contrato, servicios, hooks React Query, store Zustand persistido y `RoleGuard`; cliente HTTP mínimo en `@agrodoc/api`.
-- `2026-10-31` · **Divider/OrDivider/Text**: átomo `Divider`, molécula `OrDivider` y `Text` con `fontFamily` de tokens más fallback sans en web.
-- `2026-10-28` · **DynamicBar**: radio circular fijo para todas las barras; se elimina la prop `radius` y se agrega el token `radius.dynamicBar`.
-- `2026-10-28` · **DynamicBar/StepIndicator**: barra con relleno paramétrico (0-100) y molécula de pasos con barras al 0/100%; tokens `colors.track` y `size.dynamicBar`; ejemplos en Playground.
-- `2026-10-28` · **Assets**: logotipo AgroDoc en `packages/ui/src/assets` (SVG y PNG de respaldo); `@agrodoc/ui` exporta `AGRODOC_LOGO` y el Playground lo muestra en 48/72/120 px.
-- `2026-10-27` · **Checkbox**: átomo con marcado, disabled y tamaño paramétrico; molécula `CheckboxInput` con fila completa presionable. `Text` gana variante `link` con `onPress`; tokens `size.checkbox`, `typography.link` e icono `check`.
-- `2026-10-27` · **Moléculas**: `FormField` (etiqueta, Input, error/ayuda y borde `danger`) y `PasswordInput` (ojo local para alternar visibilidad, HU1.2). `Input` gana `trailing` y `status`; Playground con cabeceras grandes por nivel.
-- `2026-10-27` · **Text**: átomo con variantes `title/subtitle/body/caption/label`, colores semánticos, alineación y `numberOfLines`. Tokens `colors.success` y `lineHeight` por variante; `Input` deja de exponer la variante de contraseña.
-- `2026-10-27` · **Avatar**: átomo con imagen paramétrica, tamaños `sm/md/lg/xl` o px, variantes `plain/ring`, badge de cámara y fallback con iniciales o icono. Tokens `size.avatar*` e icono `person`.
-- `2026-10-27` · **Docs**: regla de comentarios en español y encabezados de documento en los archivos fuente; sin cambios de código.
-- `2026-10-26` · **Web**: `react-native-svg` apunta a su entry web; Vite 8 requiere declarar `.web.js` en `optimizeDeps.rolldownOptions.resolve.extensions`.
-- `2026-10-26` · **Icon**: átomo `Icon` con 23 iconos SVG (paths de Bootstrap Icons) vía `react-native-svg`; props `name`, `size`, `color` y `active`. `Button` acepta `icon` y `Input` acepta un `Icon` como `symbol`.
-- `2026-10-26` · **Input**: átomo `Input` con `placeholder` y `symbol` parametrizables, foco y estado deshabilitado. Tokens nuevos: `colors.text`, `colors.surface`, `colors.border`; `radius.input` pasa a forma pill.
-- `2026-10-26` · **Playground**: reorganizado como catálogo por nivel (`Átomo`) y fondo basado en `colors.surface`.
-- `2026-10-26` · **Tokens**: build corregido; genera tema plano (`colors.primary`, `spacing.buttonY`, etc.) y convierte strings numéricos a números. `buttonX/Y` movidos de `radius` a `spacing`.
-- `2026-10-26` · **UI**: `Button` operativo en web con `primary`, `secondary`, `danger`, `ghost`, `disabled`, `loading` y `fullWidth`. Spinner toma color del tema.
-- `2026-10-26` · **Web**: build de producción OK; alias `react-native` → `react-native-web`; dependencias de `@agrodoc/ui` resueltas.
-- `2026-10-20` · **Base**: monorepo pnpm + Turborepo, estructura de paquetes y primer `Button`.
-
 ## Pendientes
 
-- Conectar `QueryClientProvider` en las apps y configurar `setApiBaseUrl` de `@agrodoc/api` al arrancar.
+- Configurar `setApiBaseUrl` de `@agrodoc/api` al arrancar en web y móvil.
 - Persistir la sesión móvil con almacenamiento seguro (hoy queda en memoria).
-- Conectar móvil: `ThemeProvider` + `@agrodoc/tokens` (falta declararlo en `apps/mobile/package.json`).
+- Crear pantallas de registro y recuperación de contraseña, con sus rutas.
 - Crear átomos restantes: `Badge`, `Switch`.
 - Crear moléculas restantes de formularios y navegación.
 - Añadir script `watch` de tokens para desarrollo.
-- Limpiar CSS del template Vite (hoy fuerza modo oscuro y no coincide con el tema claro).
+- Eliminar `apps/web/src/App.css` (resto del template Vite, ya sin uso).
 
 ## Trampas conocidas
 

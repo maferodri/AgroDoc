@@ -31,7 +31,7 @@
         "dynamicBar": { "value": "8" }
     },
     "radius": {
-        "button": { "value": "{radius.md}" },
+        "button": { "value": "{radius.full}" },
         "card": { "value": "{radius.xl}" },
         "input": { "value": "{radius.full}" },
         "avatar": { "value": "{radius.full}" },

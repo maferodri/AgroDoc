@@ -31,7 +31,7 @@ export default {
     "lg": 16,
     "xl": 25,
     "full": 9999,
-    "button": 12,
+    "button": 9999,
     "card": 25,
     "input": 9999,
     "avatar": 9999,

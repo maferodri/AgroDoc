@@ -13,5 +13,12 @@ export const getStyles = ({ spacing }) =>
         labelRow: {
             flexDirection: 'row',
             alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: spacing.xs,
+        },
+        labelGroup: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            flexShrink: 1,
         },
     });
