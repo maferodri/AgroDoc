@@ -97,7 +97,8 @@ pnpm --filter @agrodoc/mobile start
 | Playground web | ✅ | catálogo por niveles con cabeceras grandes |
 | App web | 🟡 | rutas base + Playground |
 | App móvil | ⏳ | template Expo, sin tema ni Button |
-| features/api/store/utils | ⏳ | scaffolds vacíos |
+| Feature auth | 🟡 | esquemas, servicios, hooks, store y `RoleGuard`; falta conectar providers |
+| api / store / utils | 🟡 | `@agrodoc/api` tiene cliente HTTP; store y utils siguen vacíos |
 
 ## Mantenimiento de este archivo
 
@@ -118,6 +119,7 @@ Reglas de escritura:
 
 ## Bitácora ligera
 
+- `2026-10-31` · **Auth**: feature con esquemas Zod del contrato, servicios, hooks React Query, store Zustand persistido y `RoleGuard`; cliente HTTP mínimo en `@agrodoc/api`.
 - `2026-10-31` · **Divider/OrDivider/Text**: átomo `Divider`, molécula `OrDivider` y `Text` con `fontFamily` de tokens más fallback sans en web.
 - `2026-10-28` · **DynamicBar**: radio circular fijo para todas las barras; se elimina la prop `radius` y se agrega el token `radius.dynamicBar`.
 - `2026-10-28` · **DynamicBar/StepIndicator**: barra con relleno paramétrico (0-100) y molécula de pasos con barras al 0/100%; tokens `colors.track` y `size.dynamicBar`; ejemplos en Playground.
@@ -138,8 +140,10 @@ Reglas de escritura:
 
 ## Pendientes
 
+- Conectar `QueryClientProvider` en las apps y configurar `setApiBaseUrl` de `@agrodoc/api` al arrancar.
+- Persistir la sesión móvil con almacenamiento seguro (hoy queda en memoria).
 - Conectar móvil: `ThemeProvider` + `@agrodoc/tokens` (falta declararlo en `apps/mobile/package.json`).
-- Crear átomos restantes: `Badge`, `Switch`, `Divider`.
+- Crear átomos restantes: `Badge`, `Switch`.
 - Crear moléculas restantes de formularios y navegación.
 - Añadir script `watch` de tokens para desarrollo.
 - Limpiar CSS del template Vite (hoy fuerza modo oscuro y no coincide con el tema claro).
@@ -156,3 +160,4 @@ Reglas de escritura:
 - El Playground no existe en producción (`import.meta.env.DEV`).
 - `packages/ui/src/theme/tokens.js` existe pero **no** está exportado en `index.js`; no asumir que está disponible.
 - `Text` resuelve su `fontFamily` con `fontFamily.web.js`; en web agrega fallback sans porque Inter no se carga por defecto.
+- Los hooks de `@agrodoc/features` (React Query) fallan sin `QueryClientProvider`; la app debe montarlo antes del router.

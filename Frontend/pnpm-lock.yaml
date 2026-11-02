@@ -261,7 +261,24 @@ importers:
         specifier: ^5.0.15
         version: 5.0.15(@types/react@19.3.0)(react@19.3.0)
 
-  packages/features: {}
+  packages/features:
+    dependencies:
+      '@agrodoc/api':
+        specifier: workspace:*
+        version: link:../api
+      '@tanstack/react-query':
+        specifier: ^5.104.1
+        version: 5.104.1(react@19.3.0)
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
+      zustand:
+        specifier: ^5.0.15
+        version: 5.0.15(@types/react@19.3.0)(react@19.3.0)
+    devDependencies:
+      react:
+        specifier: ^19.2.8
+        version: 19.3.0
 
   packages/store:
     dependencies:
