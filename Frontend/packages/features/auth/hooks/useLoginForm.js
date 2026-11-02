@@ -7,6 +7,9 @@ import { useState } from 'react';
 import { getFieldErrors, loginRequestSchema } from '../schemas/authSchemas.js';
 import { useLogin } from './useLogin.js';
 
+/** Mensaje único para credenciales rechazadas por el backend (HTTP 401). */
+const INVALID_CREDENTIALS_MESSAGE = 'Usuario o contraseña incorrectos.';
+
 /**
  * @param {{ onSuccess?: (session: object) => void }} [options]
  *   Callback opcional cuando el backend devuelve una sesión válida.
@@ -35,11 +38,13 @@ export function useLoginForm({ onSuccess } = {}) {
     const setEmail = (value) => {
         setEmailValue(value);
         clearFieldError('email');
+        setError('');
     };
 
     const setPassword = (value) => {
         setPasswordValue(value);
         clearFieldError('password');
+        setError('');
     };
 
     /** Valida en cliente y, si es correcto, delega el envío a `useLogin`. */
@@ -56,8 +61,14 @@ export function useLoginForm({ onSuccess } = {}) {
         login.mutate(result.data, {
             onSuccess: (session) => onSuccess?.(session),
             onError: (mutationError) => {
+                // El backend responde 401 cuando el correo o la contraseña no
+                // coinciden; se muestra un mensaje claro y sin detalles internos.
                 setError(
-                    mutationError?.message || 'No se pudo iniciar sesión.'
+                    mutationError?.status === 401 ||
+                        mutationError?.isUnauthorized
+                        ? INVALID_CREDENTIALS_MESSAGE
+                        : mutationError?.message ||
+                              'No se pudo iniciar sesión.'
                 );
             },
         });

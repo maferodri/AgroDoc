@@ -114,9 +114,9 @@ pnpm --filter @agrodoc/mobile start
 | UI moléculas | 🟡 | `FormField`, `PasswordInput`, `CheckboxInput`, `StepIndicator`, `OrDivider` |
 | UI organismos | 🟡 | `LoginForm` con variantes `mobile`/`web`; falta el resto de organismos |
 | Playground web | ✅ | catálogo por niveles con cabeceras grandes |
-| App web | 🟡 | rutas base, login en `/login` y Playground |
-| App móvil | 🟡 | login con tema y React Query; falta navegación |
-| Feature auth | 🟡 | esquemas, servicios, hooks (incl. `useLoginForm`), store y `RoleGuard`; falta registro y recuperación |
+| App web | 🟡 | rutas base, login, lobbies por rol y Playground |
+| App móvil | 🟡 | login y navegación raíz por rol; faltan los paneles |
+| Feature auth | 🟡 | esquemas, servicios, hooks (incl. `useLoginForm` con error 401), store y `RoleGuard`; falta registro y recuperación |
 | api / store / utils | 🟡 | `@agrodoc/api` tiene cliente HTTP; store y utils siguen vacíos |
 
 ## Mantenimiento de este archivo
@@ -140,6 +140,7 @@ Reglas de escritura:
 
 - Configurar `setApiBaseUrl` de `@agrodoc/api` al arrancar en web y móvil.
 - Persistir la sesión móvil con almacenamiento seguro (hoy queda en memoria).
+- Implementar los paneles reales de cada lobby y `ProtectedRoute` por rol.
 - Crear pantallas de registro y recuperación de contraseña, con sus rutas.
 - Crear átomos restantes: `Badge`, `Switch`.
 - Crear moléculas restantes de formularios y navegación.

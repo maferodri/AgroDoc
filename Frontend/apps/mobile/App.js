@@ -1,12 +1,12 @@
 /**
  * Documento: raíz de la app móvil.
- * Compone el tema claro, React Query y la primera pantalla (login).
+ * Compone el tema claro, React Query y la navegación raíz por sesión.
  */
 import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@agrodoc/ui';
 import { light } from '@agrodoc/tokens';
-import LoginScreen from './src/screens/auth/LoginScreen';
+import RootNavigator from './src/navigation/RootNavigator';
 
 export default function App() {
   // Se crea una sola instancia por montaje para conservar la caché de auth.
@@ -22,7 +22,7 @@ export default function App() {
   return (
     <ThemeProvider theme={light}>
       <QueryClientProvider client={queryClient}>
-        <LoginScreen />
+        <RootNavigator />
       </QueryClientProvider>
     </ThemeProvider>
   );

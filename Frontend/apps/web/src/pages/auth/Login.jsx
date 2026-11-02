@@ -13,8 +13,7 @@ export default function Login() {
     const theme = useTheme();
     const styles = useMemo(() => getStyles(theme), [theme]);
 
-    // La sesión queda en el store; aún no existe una pantalla privada a la
-    // que redirigir, así que el guard se encargará cuando esté disponible.
+    // El store guarda la sesión y el router redirige al lobby del rol.
     const { email, password, errors, error, loading, setEmail, setPassword, submit } =
         useLoginForm();
 
