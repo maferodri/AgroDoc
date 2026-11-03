@@ -17,16 +17,17 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.exceptions import ConflictError
-from app.core.security import create_access_token, hash_password
+from app.core.exceptions import ConflictError, ForbiddenError, UnauthorizedError
+from app.core.security import create_access_token, hash_password, verify_password
 from app.features.auth import repository
 from app.features.auth.models import User
-from app.features.auth.schemas import AuthResponse, RegisterRequest
+from app.features.auth.schemas import AuthResponse, RegisterRequest, LoginRequest, User as UserSchema
 from app.features.auth.schemas import User as UserSchema
 from app.shared.schemas import ModuleHealth
 
 MODULE = "auth"
 
+_DUMMY_PASSWORD_HASH = hash_password("dummy-password-for-timing-only")
 
 def health() -> ModuleHealth:
     return ModuleHealth(module=MODULE)
@@ -80,6 +81,24 @@ def register(db: Session, payload: RegisterRequest) -> AuthResponse:
         license_number=payload.license_number,
     )
 
+    response = _issue_tokens(db, user)
+    db.commit()
+    return response
+
+def _authenticate(db: Session, email: str, password: str) -> User:
+    user = repository.get_user_by_email(db, email)
+    if user is None:
+        verify_password(password, _DUMMY_PASSWORD_HASH)
+        raise UnauthorizedError("Credenciales inválidas")
+    if not verify_password(password, user.password_hash):
+        raise UnauthorizedError("Credenciales inválidas")
+    return user
+
+
+def login(db: Session, payload: LoginRequest) -> AuthResponse:
+    user = _authenticate(db, payload.email, payload.password)
+    if not user.is_active:
+        raise ForbiddenError("La cuenta está desactivada")
     response = _issue_tokens(db, user)
     db.commit()
     return response
