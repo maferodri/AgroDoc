@@ -1,6 +1,6 @@
 /**
  * Documento: lobby del agricultor (web).
- * Vista temporal que confirma el rol y servirá de contenedor del panel.
+ * La web es de consulta: el diagnóstico por cámara vive solo en la app móvil.
  */
 import { useMemo } from 'react';
 import { View } from 'react-native';
@@ -15,7 +15,9 @@ export default function FarmerLobby() {
                 minHeight: '100vh',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: theme.colors.surface,
+                gap: theme.spacing.sm,
+                padding: theme.spacing.lg,
+                backgroundColor: theme.colors.background,
             },
         }),
         [theme]
@@ -23,7 +25,11 @@ export default function FarmerLobby() {
 
     return (
         <View style={styles.screen}>
-            <Text variant="title">Farmer Lobby</Text>
+            <Text variant="title">Panel del agricultor</Text>
+            <Text variant="body" color="notselected" align="center">
+                Para tomar fotos y diagnosticar tus cultivos usa la app móvil
+                de AgroDoc.
+            </Text>
         </View>
     );
 }

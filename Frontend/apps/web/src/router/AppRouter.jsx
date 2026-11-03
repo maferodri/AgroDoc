@@ -11,6 +11,7 @@ import AdminLobby from '../pages/admin/AdminLobby';
 import AgronomistLobby from '../pages/agronomist/AgronomistLobby';
 import FarmerLobby from '../pages/farmer/FarmerLobby';
 import Playground from '../pages/Playground';
+import { ProtectedRoute } from './ProtectedRoute';
 import { ROUTES, getHomeRoute } from './routes';
 
 /** Lleva al lobby del rol actual o al login si no hay sesión. */
@@ -60,10 +61,31 @@ export default function AppRouter() {
             <Route path={ROUTES.register} element={<PublicRegister />} />
             <Route path="/" element={<HomeRedirect />} />
 
-            {/* Lobbies por rol */}
-            <Route path={ROUTES.farmerLobby} element={<FarmerLobby />} />
-            <Route path={ROUTES.agronomistLobby} element={<AgronomistLobby />} />
-            <Route path={ROUTES.adminLobby} element={<AdminLobby />} />
+            {/* Lobbies por rol, protegidos contra acceso cruzado */}
+            <Route
+                path={`${ROUTES.farmerLobby}/*`}
+                element={
+                    <ProtectedRoute roles={['farmer']}>
+                        <FarmerLobby />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path={`${ROUTES.agronomistLobby}/*`}
+                element={
+                    <ProtectedRoute roles={['agronomist']}>
+                        <AgronomistLobby />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path={`${ROUTES.adminLobby}/*`}
+                element={
+                    <ProtectedRoute roles={['admin']}>
+                        <AdminLobby />
+                    </ProtectedRoute>
+                }
+            />
 
             {/* Solo en desarrollo, fuera de ProtectedRoute */}
             {import.meta.env.DEV && (

@@ -8,6 +8,7 @@ import {
     agronomistListSchema,
     authResponseSchema,
     loginRequestSchema,
+    recoverPasswordSchema,
     refreshTokenSchema,
     registerRequestSchema,
     userSchema,
@@ -62,6 +63,18 @@ export async function logoutUser({ refreshToken, accessToken }) {
     const body = refreshTokenSchema.parse({ refresh_token: refreshToken });
 
     await request('/auth/logout', { method: 'POST', body, token: accessToken });
+}
+
+/**
+ * Solicita el correo de recuperación de contraseña.
+ *
+ * @param {{ email: string }} input Correo del usuario.
+ * @returns {Promise<{ message: string }>} Confirmación del backend.
+ */
+export async function requestPasswordReset(input) {
+    const body = recoverPasswordSchema.parse(input);
+
+    return request('/auth/recover-password', { method: 'POST', body });
 }
 
 /**

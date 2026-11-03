@@ -7,10 +7,14 @@ import { useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import {
     AGRODOC_LOGO,
+    Alert,
     Avatar,
+    Badge,
     Button,
     Checkbox,
     CheckboxInput,
+    ConfidenceBar,
+    ConfirmDialog,
     Divider,
     DynamicBar,
     FormField,
@@ -816,6 +820,84 @@ const LoginFormDemo = () => {
     );
 };
 
+const BadgeDemo = () => {
+    const theme = useTheme();
+
+    return (
+        <View
+            style={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                gap: theme.spacing.sm,
+            }}
+        >
+            <Badge variant="healthy">Saludable</Badge>
+            <Badge variant="warning">Atención</Badge>
+            <Badge variant="danger">Riesgo</Badge>
+            <Badge variant="premium">Premium</Badge>
+        </View>
+    );
+};
+
+const ConfidenceBarDemo = () => {
+    const theme = useTheme();
+
+    return (
+        <View style={{ gap: theme.spacing.lg, maxWidth: 480 }}>
+            <ConfidenceBar value={92.8} />
+            <ConfidenceBar value={64.2} />
+            <ConfidenceBar value={34.7} />
+        </View>
+    );
+};
+
+const AlertDemo = () => {
+    const theme = useTheme();
+
+    return (
+        <View style={{ gap: theme.spacing.md, maxWidth: 480 }}>
+            <Alert
+                variant="info"
+                title="Nuevo diagnóstico disponible"
+                message="Tu análisis de la foto ya está listo."
+            />
+            <Alert
+                variant="weather"
+                title="Lluvia prevista"
+                message="Considera posponer el riego."
+            />
+            <Alert
+                variant="critical"
+                title="Plaga detectada"
+                message="Revisa el lote norte lo antes posible."
+            />
+        </View>
+    );
+};
+
+const ConfirmDialogDemo = () => {
+    const [visible, setVisible] = useState(false);
+
+    return (
+        <>
+            <Button
+                title="Eliminar cultivo"
+                variant="danger"
+                onPress={() => setVisible(true)}
+            />
+            <ConfirmDialog
+                visible={visible}
+                title="Eliminar cultivo"
+                message="Esta acción no se puede deshacer."
+                confirmLabel="Eliminar"
+                destructive
+                onConfirm={() => setVisible(false)}
+                onCancel={() => setVisible(false)}
+            />
+        </>
+    );
+};
+
 export default function Playground() {
     const theme = useTheme();
 
@@ -977,6 +1059,10 @@ export default function Playground() {
                         <SubTitle>Barra de tareas</SubTitle>
                         <TabBarDemo />
                     </CatalogItem>
+
+                    <CatalogItem name="Badge">
+                        <BadgeDemo />
+                    </CatalogItem>
                 </LevelSection>
 
                 <LevelSection
@@ -1002,6 +1088,10 @@ export default function Playground() {
                     <CatalogItem name="StepIndicator">
                         <StepIndicatorDemo />
                     </CatalogItem>
+
+                    <CatalogItem name="ConfidenceBar">
+                        <ConfidenceBarDemo />
+                    </CatalogItem>
                 </LevelSection>
 
                 <LevelSection
@@ -1025,7 +1115,13 @@ export default function Playground() {
                     title="Feedback"
                     description="Estados de respuesta para el usuario."
                 >
-                    <ComingSoon>alert, toast y estados vacíos.</ComingSoon>
+                    <CatalogItem name="Alert">
+                        <AlertDemo />
+                    </CatalogItem>
+
+                    <CatalogItem name="ConfirmDialog">
+                        <ConfirmDialogDemo />
+                    </CatalogItem>
                 </LevelSection>
             </View>
         </View>

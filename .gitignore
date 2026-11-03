@@ -74,6 +74,13 @@ dist-ssr
 # Agents
 .claude
 
+# Pruebas y artefactos generados
+.turbo/
+coverage/
+playwright-report/
+test-results/
+storybook-static/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

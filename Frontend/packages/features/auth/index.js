@@ -10,6 +10,7 @@ export {
     logoutUser,
     refreshSession,
     registerUser,
+    requestPasswordReset,
 } from './api/authApi.js';
 
 export {
@@ -22,7 +23,9 @@ export {
     errorResponseSchema,
     getFieldErrors,
     loginRequestSchema,
+    recoverPasswordSchema,
     refreshTokenSchema,
+    registerFormSchema,
     registerRequestSchema,
     userSchema,
 } from './schemas/authSchemas.js';
@@ -34,6 +37,7 @@ export { useCurrentUser } from './hooks/useCurrentUser.js';
 export { useLogin } from './hooks/useLogin.js';
 export { useLoginForm } from './hooks/useLoginForm.js';
 export { useLogout } from './hooks/useLogout.js';
+export { useRecoverPasswordForm } from './hooks/useRecoverPasswordForm.js';
 export { useRefreshSession } from './hooks/useRefreshSession.js';
 export { useRegister } from './hooks/useRegister.js';
 export { useRegisterForm } from './hooks/useRegisterForm.js';
@@ -46,3 +50,4 @@ export {
 } from './store/authStore.js';
 
 export { RoleGuard } from './components/RoleGuard.jsx';
+export { LogoutButton } from './components/LogoutButton.jsx';

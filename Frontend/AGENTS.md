@@ -47,12 +47,31 @@ Frontend/
 │  └─ mobile/     Expo + React Native
 ├─ packages/
 │  ├─ tokens/     Style Dictionary → build/light.js
-│  ├─ ui/         átomos/moléculas/organismos + tema
-│  ├─ features/   lógica por épica (scaffold)
-│  ├─ api/ store/ utils/   (scaffold)
+│  ├─ ui/         átomos/moléculas/organismos + tema + Storybook
+│  ├─ features/   lógica por épica (auth, diagnóstico, suscripciones, admin)
+│  ├─ api/        cliente HTTP + handlers MSW compartidos
+│  ├─ utils/      utilidades puras (confianza)
+│  └─ store/      scaffold de estado global
 ├─ turbo.json
 └─ pnpm-workspace.yaml
 ```
+
+## Pruebas
+
+| Capa | Herramienta | Ubicación |
+|---|---|---|
+| Unitarias | Vitest | `packages/utils`, `packages/features/*/schemas`, `apps/web` |
+| Componentes web | Vitest + RTL | `packages/ui`, `apps/web` |
+| Componentes móvil | Jest + jest-expo + RNTL | `apps/mobile` |
+| API simulada | MSW | `packages/api/src/mocks` (`@agrodoc/api/mocks`) |
+| E2E web | Playwright | `apps/web/e2e` |
+| E2E móvil | Maestro | `apps/mobile/.maestro` |
+| Visual | Storybook | `packages/ui/.storybook` + `*.stories.jsx` |
+
+- Los handlers MSW cubren login por rol, registro, diagnóstico alto/medio/bajo, consultas, pagos, suscripción y administración.
+- Playwright intercepta `**/api/v1/**` con `apps/web/e2e/fixtures.js`; no requiere backend.
+- En Vitest, `react-native` se aliasa a `react-native-web` y `react-native-svg` a su build web.
+- Si una prueba de UI falla por versiones de React, revisar que `react` y `react-dom` estén fijados a `19.2.3` en ui/features/web (misma versión que Expo).
 
 ## Flujo tokens → UI → app
 
@@ -79,6 +98,14 @@ pnpm install
 # Web (dev)
 pnpm --filter @agrodoc/web dev
 
+# Pruebas automatizadas
+pnpm lint                     # ESLint raíz (apps + paquetes + pruebas)
+pnpm test                     # Vitest/Jest vía Turborepo
+pnpm --filter web test:e2e    # Playwright (levanta Vite)
+pnpm --filter mobile test     # Jest + jest-expo
+pnpm --filter ui storybook    # catálogo visual en :6006
+maestro test apps/mobile/.maestro
+
 # Tokens (OBLIGATORIO tras editar JSON de tokens)
 pnpm --filter @agrodoc/tokens build
 
@@ -92,6 +119,7 @@ pnpm --filter @agrodoc/mobile start
 - Para dependencias de Expo usar `npx expo install` dentro de `apps/mobile`.
 - Tras agregar dependencias workspace, ejecutar `pnpm install`.
 - No existe `pnpm build` en la raíz; usar filtros o `pnpm turbo build`.
+- `pnpm test` solo ejecuta paquetes con script `test`; la tarea está en `turbo.json` y usa caché.
 
 ## Dónde tocar según la tarea
 
@@ -110,15 +138,19 @@ pnpm --filter @agrodoc/mobile start
 |---|---|---|
 | Tokens | ✅ | build exporta valores planos y números |
 | Tema | ✅ | `ThemeProvider` + `useTheme` |
-| UI atoms | 🟡 | `Button`, `Input`, `Icon`, `Avatar`, `Text`, `Checkbox`, `DynamicBar`, `Divider` |
+| UI atoms | 🟡 | `Button`, `Input`, `Icon`, `Avatar`, `Text`, `Checkbox`, `DynamicBar`, `Divider`, `Badge`; falta `Switch` |
 | UI assets | ✅ | logotipo (`AGRODOC_LOGO`) y fondos de auth (`LOGIN_BACKGROUND`, `REGISTER_BACKGROUND`) |
-| UI moléculas | 🟡 | `FormField`, `PasswordInput`, `CheckboxInput`, `StepIndicator`, `OrDivider` |
-| UI organismos | 🟡 | `LoginForm` y `RegisterForm` con variantes `mobile`/`web`; falta el resto de organismos |
-| Playground web | ✅ | catálogo por niveles con cabeceras grandes |
-| App web | 🟡 | rutas base, login, registro, lobbies por rol y Playground |
-| App móvil | 🟡 | login, registro y navegación raíz por rol; faltan los paneles |
-| Feature auth | 🟡 | esquemas, servicios, hooks (incl. `useLoginForm` con error 401 y `useRegisterForm` con 409), store y `RoleGuard`; falta recuperación |
-| api / store / utils | 🟡 | `@agrodoc/api` tiene cliente HTTP; store y utils siguen vacíos |
+| UI moléculas | ✅ | `FormField`, `PasswordInput`, `CheckboxInput`, `StepIndicator`, `OrDivider`, `ConfidenceBar` |
+| UI organismos | 🟡 | `LoginForm`, `RegisterForm`, `Alert`, `ConfirmDialog`; faltan header/navegación |
+| Playground web | ✅ | catálogo por niveles con Badge, ConfidenceBar, Alert y ConfirmDialog |
+| App web | ✅ | login, registro, guard por rol, panel admin (activar/desactivar) y bandeja del agrónomo |
+| App móvil | ✅ | login, registro, bloqueo admin y flujo agricultor foto → preview → diagnóstico |
+| Feature auth | ✅ | esquemas, servicios, hooks (401/409), store, `RoleGuard`, recuperación y `LogoutButton` |
+| Feature diagnóstico | ✅ | análisis con MSW, confianza alta/media/baja, consulta con agrónomo |
+| Feature suscripciones | ✅ | plan básico sin muro de pago y registro de pagos |
+| Feature admin | ✅ | lista de usuarios y cambio de estado |
+| api / store / utils | 🟡 | `@agrodoc/api` con cliente y MSW; `utils` con confianza; `store` sigue como scaffold |
+| Pruebas | ✅ | `pnpm lint`, `pnpm test`, Playwright y Storybook funcionan |
 
 ## Mantenimiento de este archivo
 
@@ -141,12 +173,12 @@ Reglas de escritura:
 
 - Configurar `setApiBaseUrl` de `@agrodoc/api` al arrancar en web y móvil.
 - Persistir la sesión móvil con almacenamiento seguro (hoy queda en memoria).
-- Implementar los paneles reales de cada lobby y `ProtectedRoute` por rol.
-- Crear pantalla y ruta de recuperación de contraseña.
-- Crear átomos restantes: `Badge`, `Switch`.
-- Crear moléculas restantes de formularios y navegación.
+- Crear pantalla y ruta web de recuperación de contraseña (el hook ya existe).
+- Implementar cámara real en móvil (hoy el flujo usa una foto local de ejemplo).
+- Crear átomo `Switch` y moléculas restantes de navegación.
 - Añadir script `watch` de tokens para desarrollo.
 - Eliminar `apps/web/src/App.css` (resto del template Vite, ya sin uso).
+- Ejecutar el flujo Maestro contra un backend/emulador real en CI.
 
 ## Trampas conocidas
 
@@ -161,3 +193,14 @@ Reglas de escritura:
 - `packages/ui/src/theme/tokens.js` existe pero **no** está exportado en `index.js`; no asumir que está disponible.
 - `Text` resuelve su `fontFamily` con `fontFamily.web.js`; en web agrega fallback sans porque Inter no se carga por defecto.
 - Los hooks de `@agrodoc/features` (React Query) fallan sin `QueryClientProvider`; la app debe montarlo antes del router.
+
+<!-- BEGIN:turborepo-agent-rules -->
+
+# This is NOT the Turborepo you know
+
+Turborepo configuration, task behavior, and CLI commands can vary between installed versions and may differ from your training data. Resolve the `turbo` package from this file's directory or relevant workspace; in monorepos, it may not be visible from the repository root. For example, run `node -p "require.resolve('turbo/package.json')"` from a workspace that depends on `turbo`.
+
+Read `docs/README.md` inside that installed package first, then read the relevant pages from its `docs/` directory before changing Turborepo configuration or commands. Heed deprecation notices. These bundled docs match the installed package version and are available without network access.
+
+This block is written and re-added by `turbo` before repository-scoped commands when an AI agent is detected. In the Turborepo source repository, its template is defined in `crates/turborepo-cli/src/cli/agent_guidance.rs`. Removing the managed block while updates are enabled means a later qualifying invocation will add it again. Set `"agentGuidance": false` in the root `turbo.json` or `turbo.jsonc` to opt out; this does not remove an existing block. Keep the block committed with your work to avoid an uncommitted change on the next agent invocation.
+<!-- END:turborepo-agent-rules -->

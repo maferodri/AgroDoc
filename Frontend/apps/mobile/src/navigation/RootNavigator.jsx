@@ -4,7 +4,7 @@
  */
 import { useState } from 'react';
 import { useAuth } from '@agrodoc/features';
-import AdminLobbyScreen from '../screens/admin/AdminLobbyScreen';
+import AdminNotAllowedScreen from '../screens/admin/AdminNotAllowedScreen';
 import AgronomistLobbyScreen from '../screens/agronomist/AgronomistLobbyScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
@@ -14,7 +14,6 @@ import FarmerLobbyScreen from '../screens/farmer/FarmerLobbyScreen';
 const LOBBY_BY_ROLE = {
     farmer: FarmerLobbyScreen,
     agronomist: AgronomistLobbyScreen,
-    admin: AdminLobbyScreen,
 };
 
 /**
@@ -36,6 +35,11 @@ export default function RootNavigator() {
 
     if (!isAuthenticated || !role) {
         return <PublicAuth />;
+    }
+
+    // El panel de administración es exclusivamente web.
+    if (role === 'admin') {
+        return <AdminNotAllowedScreen />;
     }
 
     const Lobby = LOBBY_BY_ROLE[role] ?? FarmerLobbyScreen;

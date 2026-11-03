@@ -55,6 +55,28 @@ export const registerRequestSchema = z.object({
     full_name: z.string().trim().min(1, 'Ingresa tu nombre completo.'),
 });
 
+/**
+ * Formulario completo de registro: agrega la confirmación de contraseña.
+ * La validación cruzada vive en el esquema para que web y móvil compartan
+ * exactamente el mismo mensaje de error.
+ */
+export const registerFormSchema = registerRequestSchema
+    .extend({
+        confirm_password: z
+            .string()
+            .min(1, 'Confirma tu contraseña.'),
+    })
+    .refine((data) => data.password === data.confirm_password, {
+        path: ['confirm_password'],
+        message: 'Las contraseñas no coinciden.',
+    });
+
+/** Cuerpo del formulario de recuperación de contraseña. */
+export const recoverPasswordSchema = z.object({
+    email: z.email('Ingresa un correo válido.'),
+});
+
+
 /** Cuerpo de `/auth/refresh` y `/auth/logout`. */
 export const refreshTokenSchema = z.object({
     refresh_token: z.string().min(1),
