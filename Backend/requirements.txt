@@ -9,3 +9,4 @@ pwdlib[argon2]>=0.2
 onnxruntime
 pillow
 numpy
+email-validator
