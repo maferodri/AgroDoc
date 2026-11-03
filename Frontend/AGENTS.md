@@ -36,6 +36,7 @@ el grafo al día. El grafo es la fuente de contexto; este archivo solo resume re
 - Variantes por props (`variant`, `size`, `status`), no duplicar componentes.
 - Código específico de plataforma: `Componente.web.jsx` / `Componente.native.jsx`.
 - **Playground como catálogo**: todo componente visual nuevo debe agregarse a `apps/web/src/pages/Playground.jsx` bajo su categoría (`Átomo`, `Molécula`, `Organismo`, `Feedback`). Sin excepción.
+- **Estilo de código — skill `ponytail`**: actuar como dev senior perezoso; el cambio más pequeño que resuelve la tarea completa (incluyendo callers y tests), sin abstracciones, opciones ni features no pedidas. Cerrar cada respuesta con lo omitido y el riesgo relevante.
 
 ## Estructura
 
@@ -110,13 +111,13 @@ pnpm --filter @agrodoc/mobile start
 | Tokens | ✅ | build exporta valores planos y números |
 | Tema | ✅ | `ThemeProvider` + `useTheme` |
 | UI atoms | 🟡 | `Button`, `Input`, `Icon`, `Avatar`, `Text`, `Checkbox`, `DynamicBar`, `Divider` |
-| UI assets | ✅ | logotipo (`AGRODOC_LOGO`) y fondos de auth (`LOGIN_BACKGROUND`) |
+| UI assets | ✅ | logotipo (`AGRODOC_LOGO`) y fondos de auth (`LOGIN_BACKGROUND`, `REGISTER_BACKGROUND`) |
 | UI moléculas | 🟡 | `FormField`, `PasswordInput`, `CheckboxInput`, `StepIndicator`, `OrDivider` |
-| UI organismos | 🟡 | `LoginForm` con variantes `mobile`/`web`; falta el resto de organismos |
+| UI organismos | 🟡 | `LoginForm` y `RegisterForm` con variantes `mobile`/`web`; falta el resto de organismos |
 | Playground web | ✅ | catálogo por niveles con cabeceras grandes |
-| App web | 🟡 | rutas base, login, lobbies por rol y Playground |
-| App móvil | 🟡 | login y navegación raíz por rol; faltan los paneles |
-| Feature auth | 🟡 | esquemas, servicios, hooks (incl. `useLoginForm` con error 401), store y `RoleGuard`; falta registro y recuperación |
+| App web | 🟡 | rutas base, login, registro, lobbies por rol y Playground |
+| App móvil | 🟡 | login, registro y navegación raíz por rol; faltan los paneles |
+| Feature auth | 🟡 | esquemas, servicios, hooks (incl. `useLoginForm` con error 401 y `useRegisterForm` con 409), store y `RoleGuard`; falta recuperación |
 | api / store / utils | 🟡 | `@agrodoc/api` tiene cliente HTTP; store y utils siguen vacíos |
 
 ## Mantenimiento de este archivo
@@ -141,7 +142,7 @@ Reglas de escritura:
 - Configurar `setApiBaseUrl` de `@agrodoc/api` al arrancar en web y móvil.
 - Persistir la sesión móvil con almacenamiento seguro (hoy queda en memoria).
 - Implementar los paneles reales de cada lobby y `ProtectedRoute` por rol.
-- Crear pantallas de registro y recuperación de contraseña, con sus rutas.
+- Crear pantalla y ruta de recuperación de contraseña.
 - Crear átomos restantes: `Badge`, `Switch`.
 - Crear moléculas restantes de formularios y navegación.
 - Añadir script `watch` de tokens para desarrollo.

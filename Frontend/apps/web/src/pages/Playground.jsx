@@ -20,6 +20,7 @@ import {
     LoginForm,
     OrDivider,
     PasswordInput,
+    RegisterForm,
     StepIndicator,
     Text,
     useTheme,
@@ -699,6 +700,85 @@ const LoginFormPreview = ({ variant }) => {
     );
 };
 
+/** Ejemplo interactivo del organismo RegisterForm en sus dos variantes. */
+const RegisterFormPreview = ({ variant }) => {
+    const [fullName, setFullName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [consent, setConsent] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    // Simula el envío para revisar el estado de carga del botón principal.
+    const handleSubmit = () => {
+        setLoading(true);
+        setTimeout(() => {
+            setLoading(false);
+            alert(
+                `Crear cuenta · ${fullName || 'sin nombre'} · ${
+                    email || 'sin correo'
+                } · ${consent ? 'con' : 'sin'} consentimiento`
+            );
+        }, 600);
+    };
+
+    return (
+        <RegisterForm
+            variant={variant}
+            fullName={fullName}
+            email={email}
+            password={password}
+            confirmPassword={confirmPassword}
+            consentAccepted={consent}
+            onChangeFullName={setFullName}
+            onChangeEmail={setEmail}
+            onChangePassword={setPassword}
+            onChangeConfirmPassword={setConfirmPassword}
+            onChangeConsent={setConsent}
+            onSubmit={handleSubmit}
+            onLogin={() => alert('Iniciar sesión')}
+            loading={loading}
+        />
+    );
+};
+
+const RegisterFormDemo = () => {
+    const theme = useTheme();
+
+    return (
+        <>
+            <SubTitle>Web (tarjeta sobre fondo del catálogo)</SubTitle>
+            {/* El fondo gris permite ver la tarjeta sin simular una página blanca. */}
+            <View
+                style={{
+                    backgroundColor: theme.colors.background,
+                    borderRadius: theme.radius.card,
+                    padding: theme.spacing.lg,
+                    alignItems: 'center',
+                }}
+            >
+                <View style={{ width: '100%', maxWidth: 620 }}>
+                    <RegisterFormPreview variant="web" />
+                </View>
+            </View>
+
+            <SubTitle>Móvil (sin tarjeta)</SubTitle>
+            <View
+                style={{
+                    backgroundColor: theme.colors.surface,
+                    borderRadius: theme.radius.card,
+                    padding: theme.spacing.lg,
+                    alignItems: 'center',
+                }}
+            >
+                <View style={{ width: '100%', maxWidth: 380 }}>
+                    <RegisterFormPreview variant="mobile" />
+                </View>
+            </View>
+        </>
+    );
+};
+
 const LoginFormDemo = () => {
     const theme = useTheme();
 
@@ -930,6 +1010,10 @@ export default function Playground() {
                 >
                     <CatalogItem name="LoginForm">
                         <LoginFormDemo />
+                    </CatalogItem>
+
+                    <CatalogItem name="RegisterForm">
+                        <RegisterFormDemo />
                     </CatalogItem>
 
                     <ComingSoon>

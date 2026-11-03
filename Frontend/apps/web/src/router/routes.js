@@ -5,6 +5,7 @@
 
 export const ROUTES = {
     login: '/login',
+    register: '/register',
     playground: '/playground',
     farmerLobby: '/agricultor',
     agronomistLobby: '/agronomo',

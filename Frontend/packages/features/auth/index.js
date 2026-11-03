@@ -36,6 +36,7 @@ export { useLoginForm } from './hooks/useLoginForm.js';
 export { useLogout } from './hooks/useLogout.js';
 export { useRefreshSession } from './hooks/useRefreshSession.js';
 export { useRegister } from './hooks/useRegister.js';
+export { useRegisterForm } from './hooks/useRegisterForm.js';
 export { useAuth, useHasRole, useRole } from './hooks/useRole.js';
 
 export {

@@ -5,13 +5,16 @@
  */
 import { useMemo } from 'react';
 import { Image, View } from 'react-native';
+import { useNavigate } from 'react-router-dom';
 import { useLoginForm } from '@agrodoc/features';
 import { LOGIN_BACKGROUND, LoginForm, useTheme } from '@agrodoc/ui';
+import { ROUTES } from '../../router/routes';
 import { getStyles } from './Login.styles';
 
 export default function Login() {
     const theme = useTheme();
     const styles = useMemo(() => getStyles(theme), [theme]);
+    const navigate = useNavigate();
 
     // El store guarda la sesión y el router redirige al lobby del rol.
     const { email, password, errors, error, loading, setEmail, setPassword, submit } =
@@ -41,9 +44,7 @@ export default function Login() {
                     onForgotPassword={() =>
                         window.alert('Recuperación de contraseña próximamente')
                     }
-                    onRegister={() =>
-                        window.alert('Registro de cuenta próximamente')
-                    }
+                    onRegister={() => navigate(ROUTES.register)}
                 />
             </View>
         </View>

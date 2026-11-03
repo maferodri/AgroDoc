@@ -6,6 +6,7 @@
 import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom';
 import { useAuth } from '@agrodoc/features';
 import Login from '../pages/auth/Login';
+import Register from '../pages/auth/Register';
 import AdminLobby from '../pages/admin/AdminLobby';
 import AgronomistLobby from '../pages/agronomist/AgronomistLobby';
 import FarmerLobby from '../pages/farmer/FarmerLobby';
@@ -39,12 +40,24 @@ function PublicLogin() {
     return <Login />;
 }
 
+/** Evita mostrar el registro cuando el usuario ya tiene sesión activa. */
+function PublicRegister() {
+    const { isAuthenticated, role } = useAuth();
+
+    if (isAuthenticated && role) {
+        return <Navigate to={getHomeRoute(role)} replace />;
+    }
+
+    return <Register />;
+}
+
 export default function AppRouter() {
     return (
         <BrowserRouter>
         <Routes>
             {/* Rutas públicas */}
             <Route path={ROUTES.login} element={<PublicLogin />} />
+            <Route path={ROUTES.register} element={<PublicRegister />} />
             <Route path="/" element={<HomeRedirect />} />
 
             {/* Lobbies por rol */}

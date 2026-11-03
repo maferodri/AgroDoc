@@ -18,7 +18,10 @@ import { useLoginForm } from '@agrodoc/features';
 import { LOGIN_BACKGROUND, LoginForm, Text, useTheme } from '@agrodoc/ui';
 import { getStyles } from './LoginScreen.styles';
 
-export default function LoginScreen() {
+/**
+ * @param {() => void} [onRegister] Navega a la creación de cuenta.
+ */
+export default function LoginScreen({ onRegister }) {
     const theme = useTheme();
     const styles = useMemo(() => getStyles(theme), [theme]);
     const { height } = useWindowDimensions();
@@ -65,12 +68,7 @@ export default function LoginScreen() {
                                     'Disponible próximamente.'
                                 )
                             }
-                            onRegister={() =>
-                                Alert.alert(
-                                    'Crear cuenta',
-                                    'Disponible próximamente.'
-                                )
-                            }
+                            onRegister={onRegister}
                         />
 
                         <View style={styles.footer}>
