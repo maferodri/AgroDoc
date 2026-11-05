@@ -8,10 +8,18 @@ Cubre el registro de usuarios (`POST /auth/register`):
 """
 
 from datetime import datetime
-from typing import Literal, Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator, BeforeValidator, field_validator
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    EmailStr,
+    Field,
+    field_validator,
+    model_validator,
+)
 
 from . import validators
 
