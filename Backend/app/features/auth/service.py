@@ -21,13 +21,14 @@ from app.core.exceptions import ConflictError, ForbiddenError, UnauthorizedError
 from app.core.security import create_access_token, hash_password, verify_password
 from app.features.auth import repository
 from app.features.auth.models import User
-from app.features.auth.schemas import AuthResponse, RegisterRequest, LoginRequest, User as UserSchema
+from app.features.auth.schemas import AuthResponse, LoginRequest, RegisterRequest
 from app.features.auth.schemas import User as UserSchema
 from app.shared.schemas import ModuleHealth
 
 MODULE = "auth"
 
 _DUMMY_PASSWORD_HASH = hash_password("dummy-password-for-timing-only")
+
 
 def health() -> ModuleHealth:
     return ModuleHealth(module=MODULE)
@@ -54,8 +55,7 @@ def _issue_tokens(db: Session, user: User) -> AuthResponse:
         db,
         user=user,
         token_hash=_hash_refresh_token(refresh_token),
-        expires_at=datetime.now(UTC)
-        + timedelta(days=settings.refresh_token_expire_days),
+        expires_at=datetime.now(UTC) + timedelta(days=settings.refresh_token_expire_days),
     )
     return AuthResponse(
         # PyJWT exige `sub` como string (RFC 7519); el id es un UUID.
@@ -84,6 +84,7 @@ def register(db: Session, payload: RegisterRequest) -> AuthResponse:
     response = _issue_tokens(db, user)
     db.commit()
     return response
+
 
 def _authenticate(db: Session, email: str, password: str) -> User:
     user = repository.get_user_by_email(db, email)

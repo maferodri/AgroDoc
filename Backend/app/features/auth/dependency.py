@@ -1,5 +1,6 @@
 import uuid
 
+import jwt
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
@@ -20,9 +21,12 @@ def get_current_user(
     if credentials is None:
         raise UnauthorizedError("No autenticado")
 
-    payload = decode_token(credentials.credentials)
-    if payload is None:
-        raise UnauthorizedError("Token inválido o expirado")
+    try:
+        payload = decode_token(credentials.credentials)
+    except jwt.PyJWTError:
+        # `decode_token` lanza `ExpiredSignatureError`, `InvalidSignatureError`, etc.
+        # Si se dejan escapar, FastAPI responde 500 en vez de 401.
+        raise UnauthorizedError("Token inválido o expirado") from None
 
     subject = payload.get("sub")
     if not subject:
