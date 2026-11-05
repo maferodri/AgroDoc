@@ -76,9 +76,6 @@ def register(db: Session, payload: RegisterRequest) -> AuthResponse:
         email=payload.email,
         password_hash=hash_password(payload.password),
         full_name=payload.full_name,
-        role=payload.role,
-        specialty=payload.specialty,
-        license_number=payload.license_number,
     )
 
     response = _issue_tokens(db, user)

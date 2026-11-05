@@ -17,7 +17,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import ConflictError
-from app.features.auth.models import AgronomistProfile, RefreshToken, User
+from app.features.auth.models import RefreshToken, User
 
 # Nombre real de la restricción UNIQUE en Postgres (naming_convention de la Base).
 _EMAIL_UNIQUE_CONSTRAINT = "uq_users_email"
@@ -57,11 +57,8 @@ def create_user(
     email: str,
     password_hash: str,
     full_name: str,
-    role: str,
-    specialty: str | None = None,
-    license_number: str | None = None,
 ) -> User:
-    """Inserta el usuario (y su perfil si es agrónomo). Hace `flush`, no `commit`.
+    """Inserta el usuario. Hace `flush`, no `commit`.
 
     El `flush` es necesario: el `id` y el `created_at` los genera Postgres, y
     hasta que sale el INSERT no existen en el objeto.
@@ -70,17 +67,7 @@ def create_user(
         email=email,
         password_hash=password_hash,
         full_name=full_name,
-        role=role,
     )
-
-    if role == "agronomist":
-        # Se asigna por la relación: SQLAlchemy toma el `user_id` del padre, así
-        # que no hace falta conocer el UUID antes del flush. `cascade` lo incluye
-        # en la misma transacción.
-        user.agronomist_profile = AgronomistProfile(
-            specialty=specialty,
-            license_number=license_number,
-        )
 
     db.add(user)
     try:
