@@ -21,7 +21,7 @@ from app.core.exceptions import ConflictError, ForbiddenError, UnauthorizedError
 from app.core.security import create_access_token, hash_password, verify_password
 from app.features.auth import repository
 from app.features.auth.models import User
-from app.features.auth.schemas import AuthResponse, RegisterRequest, LoginRequest, User as UserSchema
+from app.features.auth.schemas import AuthResponse, LoginRequest, RegisterRequest
 from app.features.auth.schemas import User as UserSchema
 from app.shared.schemas import ModuleHealth
 

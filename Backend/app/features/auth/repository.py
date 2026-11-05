@@ -9,6 +9,7 @@ Contrato con el `service`:
   responder (y no filtrar qué correos existen) es trabajo del service.
 """
 
+import uuid
 from datetime import datetime
 
 from sqlalchemy import select
@@ -43,6 +44,11 @@ def get_user_by_email(db: Session, email: str) -> User | None:
     normaliza para no tener dos lugares donde se puede olvidar.
     """
     return db.scalar(select(User).where(User.email == email))
+
+
+def get_user_by_id(db: Session, user_id: uuid.UUID) -> User | None:
+    """Usuario por id (lo usa la dependencia `get_current_user`). `None` si no existe."""
+    return db.get(User, user_id)
 
 
 def create_user(
