@@ -9,6 +9,7 @@ Contrato con el `service`:
   responder (y no filtrar qué correos existen) es trabajo del service.
 """
 
+import uuid
 from datetime import datetime
 
 from sqlalchemy import select
@@ -16,7 +17,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import ConflictError
-from app.features.auth.models import AgronomistProfile, RefreshToken, User
+from app.features.auth.models import RefreshToken, User
 
 # Nombre real de la restricción UNIQUE en Postgres (naming_convention de la Base).
 _EMAIL_UNIQUE_CONSTRAINT = "uq_users_email"
@@ -45,17 +46,19 @@ def get_user_by_email(db: Session, email: str) -> User | None:
     return db.scalar(select(User).where(User.email == email))
 
 
+def get_user_by_id(db: Session, user_id: uuid.UUID) -> User | None:
+    """Usuario por id (lo usa la dependencia `get_current_user`). `None` si no existe."""
+    return db.get(User, user_id)
+
+
 def create_user(
     db: Session,
     *,
     email: str,
     password_hash: str,
     full_name: str,
-    role: str,
-    specialty: str | None = None,
-    license_number: str | None = None,
 ) -> User:
-    """Inserta el usuario (y su perfil si es agrónomo). Hace `flush`, no `commit`.
+    """Inserta el usuario. Hace `flush`, no `commit`.
 
     El `flush` es necesario: el `id` y el `created_at` los genera Postgres, y
     hasta que sale el INSERT no existen en el objeto.
@@ -64,17 +67,7 @@ def create_user(
         email=email,
         password_hash=password_hash,
         full_name=full_name,
-        role=role,
     )
-
-    if role == "agronomist":
-        # Se asigna por la relación: SQLAlchemy toma el `user_id` del padre, así
-        # que no hace falta conocer el UUID antes del flush. `cascade` lo incluye
-        # en la misma transacción.
-        user.agronomist_profile = AgronomistProfile(
-            specialty=specialty,
-            license_number=license_number,
-        )
 
     db.add(user)
     try:
