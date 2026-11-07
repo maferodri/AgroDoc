@@ -10,6 +10,9 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.features.auth import service
 from app.features.auth.dependency import get_current_user
+from app.features.auth.models import User
+from app.features.auth.schemas import AuthResponse, LoginRequest, RegisterRequest
+from app.features.auth.schemas import User as UserSchema
 from app.shared.schemas import ModuleHealth
 from app.features.auth.models import User
 from app.features.auth.schemas import AuthResponse, RegisterRequest, LoginRequest, User as UserSchema

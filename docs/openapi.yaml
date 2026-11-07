@@ -10,8 +10,10 @@ info:
     - **diagnosis** (Detección de Plagas, Catálogo y Tratamientos)
     - **consultations** (Atención Experta por Agrónomos)
 
-    `detection` no expone endpoints públicos: es un módulo interno que `diagnosis`
-    invoca en proceso.
+    `detection` no expone endpoints públicos de negocio: es un módulo interno que
+        `diagnosis` invoca en proceso. Solo publica `/detection/health` y
+        `/detection/predict`; este último permite al frontend enviar una imagen y
+        probar directamente el modelo ONNX (`ml/export/model.onnx`).
 
 servers:
   - url: http://localhost:8000/api/v1
@@ -478,6 +480,51 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+    # ==========================================
+  # DETECTION SERVICE (/detection)
+  # ==========================================
+
+  /detection/predict:
+    post:
+      tags:
+        - detection
+      summary: Clasificar una imagen de cultivo con el modelo ONNX
+      description: |
+        Endpoint directo de inferencia para el frontend. Recibe una imagen, la
+        preprocesa con los metadatos embebidos en `ml/export/model.onnx`
+        (input_size, mean, std, resize_mode) y devuelve la clase predicha, su
+        confianza y las mejores `top_k` predicciones.
+
+        No guarda nada en la base de datos ni valida el cultivo: para el flujo
+        completo con persistencia y escalado a consultas usa `POST /diagnoses`.
+      operationId: predictImage
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Imagen de la hoja/planta (JPEG, PNG o WEBP, máx. 10 MB)
+      responses:
+        '200':
+          description: Predicción del modelo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prediction'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '413':
+          description: La imagen supera el máximo de 10 MB.
+        '503':
+          description: El modelo ONNX no está disponible o sus metadatos son inválidos.
+
   # ==========================================
   # CONSULTATIONS SERVICE (/consultations)
   # ==========================================
@@ -742,7 +789,6 @@ components:
         - email
         - password
         - full_name
-        - role
       properties:
         email:
           type: string
@@ -751,13 +797,6 @@ components:
           type: string
           minLength: 8
         full_name:
-          type: string
-        role:
-          type: string
-          enum: [farmer, agronomist]
-        specialty:
-          type: string
-        license_number:
           type: string
 
     LoginRequest:
@@ -980,6 +1019,29 @@ components:
         confidence:
           type: number
           example: 0.88
+
+    Prediction:
+      type: object
+      description: Salida directa de `detection` (sin persistencia).
+      required:
+        - label
+        - confidence
+        - top_k
+        - model_version
+      properties:
+        label:
+          type: string
+          example: cafe_roya
+        confidence:
+          type: number
+          example: 0.8734
+        top_k:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopKPrediction'
+        model_version:
+          type: string
+          example: v1.0.0
 
     Diagnosis:
       type: object
