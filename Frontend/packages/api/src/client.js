@@ -5,6 +5,9 @@
  */
 
 // URL por defecto del monolito local (ver servers del contrato OpenAPI).
+// Debe ser un literal: este paquete también se empaqueta para web y móvil,
+// donde `process.env` no existe en tiempo de ejecución. Las apps que necesiten
+// otra URL llaman a `setApiBaseUrl` al arrancar (la web lo hace en `main.jsx`).
 const DEFAULT_BASE_URL = 'http://localhost:8000/api/v1';
 
 let baseUrl = DEFAULT_BASE_URL;

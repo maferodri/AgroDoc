@@ -12,6 +12,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@agrodoc/api": "workspace:*",
     "@agrodoc/features": "workspace:*",
     "@agrodoc/tokens": "workspace:*",
     "@agrodoc/ui": "workspace:*",

@@ -230,6 +230,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@agrodoc/api':
+        specifier: workspace:*
+        version: link:../../packages/api
       '@agrodoc/features':
         specifier: workspace:*
         version: link:../../packages/features

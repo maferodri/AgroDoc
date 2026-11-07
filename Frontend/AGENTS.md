@@ -36,7 +36,7 @@ el grafo al día. El grafo es la fuente de contexto; este archivo solo resume re
 - Variantes por props (`variant`, `size`, `status`), no duplicar componentes.
 - Código específico de plataforma: `Componente.web.jsx` / `Componente.native.jsx`.
 - **Playground como catálogo**: todo componente visual nuevo debe agregarse a `apps/web/src/pages/Playground.jsx` bajo su categoría (`Átomo`, `Molécula`, `Organismo`, `Feedback`). Sin excepción.
-- **Estilo de código — skill `ponytail`**: actuar como dev senior perezoso; el cambio más pequeño que resuelve la tarea completa (incluyendo callers y tests), sin abstracciones, opciones ni features no pedidas. Cerrar cada respuesta con lo omitido y el riesgo relevante.
+- **Estilo de código — skill `ponytail` (obligatoria)**: cargar la skill `ponytail` antes de escribir o modificar cualquier código. Actuar como dev senior perezoso; el cambio más pequeño que resuelve la tarea completa (incluyendo callers y tests), sin abstracciones, opciones ni features no pedidas. Cerrar cada respuesta con lo omitido y el riesgo relevante.
 
 ## Estructura
 
@@ -171,7 +171,7 @@ Reglas de escritura:
 
 ## Pendientes
 
-- Configurar `setApiBaseUrl` de `@agrodoc/api` al arrancar en web y móvil.
+- Configurar `setApiBaseUrl` de `@agrodoc/api` al arrancar en móvil. Hoy usa el default `http://localhost:8000/api/v1`, que desde un dispositivo o emulador no apunta al host de desarrollo; definir una variable pública de Expo (p. ej. `EXPO_PUBLIC_API_URL`) y llamar a `setApiBaseUrl` antes de montar la app (la web ya lo hace en `apps/web/src/main.jsx` con `VITE_API_URL`).
 - Persistir la sesión móvil con almacenamiento seguro (hoy queda en memoria).
 - Crear pantalla y ruta web de recuperación de contraseña (el hook ya existe).
 - Implementar cámara real en móvil (hoy el flujo usa una foto local de ejemplo).
@@ -188,6 +188,7 @@ Reglas de escritura:
 - No usar `react-native-web` directamente en componentes compartidos.
 - Los iconos se referencian por `name`; usar `ICON_NAMES` para validar nombres disponibles y no importar SVG sueltos.
 - El átomo `Text` choca con el `Text` de `react-native`; importarlo como alias (p. ej. `Text as UIText`).
+- **URL de API `undefined` en el navegador** → Vite solo inyecta variables `VITE_*` vía `import.meta.env`; `process.env` no existe en el bundle. La web fija la URL en `main.jsx`; el paquete `@agrodoc/api` mantiene un valor por defecto literal para móvil y tests.
 - **Iconos no cargan en dev** → Vite 8 no aplica `resolve.extensions` al optimizer; revisar `optimizeDeps.rolldownOptions.resolve.extensions` y el alias de `react-native-svg` en `apps/web/vite.config.js`.
 - El Playground no existe en producción (`import.meta.env.DEV`).
 - `packages/ui/src/theme/tokens.js` existe pero **no** está exportado en `index.js`; no asumir que está disponible.

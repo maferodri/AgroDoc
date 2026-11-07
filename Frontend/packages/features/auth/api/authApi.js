@@ -22,7 +22,7 @@ import {
  */
 export async function registerUser(input) {
     const body = registerRequestSchema.parse(input);
-    const response = await request('/auth/register', { method: 'POST', body });
+    const response = await request('/register', { method: 'POST', body });
 
     return authResponseSchema.parse(response);
 }
@@ -35,7 +35,7 @@ export async function registerUser(input) {
  */
 export async function loginUser(input) {
     const body = loginRequestSchema.parse(input);
-    const response = await request('/auth/login', { method: 'POST', body });
+    const response = await request('/login', { method: 'POST', body });
 
     return authResponseSchema.parse(response);
 }
