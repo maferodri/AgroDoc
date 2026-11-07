@@ -1,35 +1,27 @@
 #!/usr/bin/env bash
-# Muestra los contenedores y comprueba el /health de cada servicio.
+# Muestra los contenedores y comprueba la salud del API, de cada módulo y del frontend.
 # Uso: ./scripts/status.sh
 source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
 
 "${COMPOSE[@]}" ps
 echo
 
-declare -A PORTS=(
-  [gateway]=8000
-  [auth]=8001
-  [crops]=8002
-  [detection]=8003
-  [diagnosis]=8004
-  [consultations]=8005
-)
-
 fail=0
-for s in "${SERVICES[@]}"; do
-  if curl -fs --max-time 3 "http://localhost:${PORTS[$s]}/health" >/dev/null; then
-    echo "✔ $s (:${PORTS[$s]})"
+
+check() {
+  local label="$1" url="$2"
+  if curl -fs --max-time 3 "$url" >/dev/null; then
+    echo "✔ ${label}"
   else
-    echo "✘ $s (:${PORTS[$s]}) no responde"
+    echo "✘ ${label} no responde (${url})"
     fail=1
   fi
-done
+}
 
-if curl -fs --max-time 3 "http://localhost:3000" >/dev/null; then
-  echo "✔ web (:3000)"
-else
-  echo "✘ web (:3000) no responde"
-  fail=1
-fi
+check "api (/:${API_PORT}/health)" "http://localhost:${API_PORT}/health"
+for module in "${API_MODULES[@]}"; do
+  check "  └─ ${module}" "http://localhost:${API_PORT}/api/v1/${module}/health"
+done
+check "web (/:${WEB_PORT})" "http://localhost:${WEB_PORT}"
 
 exit $fail

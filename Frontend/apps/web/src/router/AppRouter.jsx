@@ -1,20 +1,95 @@
 /**
  * Documento: rutas de la app web.
- * Registra el Playground únicamente en desarrollo.
+ * Redirige la raíz y el login según la sesión, y registra los lobbies por rol.
+ * El Playground solo existe en desarrollo.
  */
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Playground from '../pages/Playground';   // 👈 import arriba
+import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom';
+import { useAuth } from '@agrodoc/features';
+import Login from '../pages/auth/Login';
+import Register from '../pages/auth/Register';
+import AdminLobby from '../pages/admin/AdminLobby';
+import AgronomistLobby from '../pages/agronomist/AgronomistLobby';
+import FarmerLobby from '../pages/farmer/FarmerLobby';
+import Playground from '../pages/Playground';
+import { ProtectedRoute } from './ProtectedRoute';
+import { ROUTES, getHomeRoute } from './routes';
+
+/** Lleva al lobby del rol actual o al login si no hay sesión. */
+function HomeRedirect() {
+    const { isAuthenticated, role } = useAuth();
+
+    return (
+        <Navigate
+            to={
+                isAuthenticated && role
+                    ? getHomeRoute(role)
+                    : ROUTES.login
+            }
+            replace
+        />
+    );
+}
+
+/** Evita mostrar el login cuando el usuario ya tiene sesión activa. */
+function PublicLogin() {
+    const { isAuthenticated, role } = useAuth();
+
+    if (isAuthenticated && role) {
+        return <Navigate to={getHomeRoute(role)} replace />;
+    }
+
+    return <Login />;
+}
+
+/** Evita mostrar el registro cuando el usuario ya tiene sesión activa. */
+function PublicRegister() {
+    const { isAuthenticated, role } = useAuth();
+
+    if (isAuthenticated && role) {
+        return <Navigate to={getHomeRoute(role)} replace />;
+    }
+
+    return <Register />;
+}
 
 export default function AppRouter() {
     return (
         <BrowserRouter>
         <Routes>
             {/* Rutas públicas */}
-            {/* <Route path="/login" element={<LoginPage />} /> */}
+            <Route path={ROUTES.login} element={<PublicLogin />} />
+            <Route path={ROUTES.register} element={<PublicRegister />} />
+            <Route path="/" element={<HomeRedirect />} />
 
-            {/* 👇 Solo en desarrollo, fuera de ProtectedRoute */}
+            {/* Lobbies por rol, protegidos contra acceso cruzado */}
+            <Route
+                path={`${ROUTES.farmerLobby}/*`}
+                element={
+                    <ProtectedRoute roles={['farmer']}>
+                        <FarmerLobby />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path={`${ROUTES.agronomistLobby}/*`}
+                element={
+                    <ProtectedRoute roles={['agronomist']}>
+                        <AgronomistLobby />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path={`${ROUTES.adminLobby}/*`}
+                element={
+                    <ProtectedRoute roles={['admin']}>
+                        <AdminLobby />
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* Solo en desarrollo, fuera de ProtectedRoute */}
             {import.meta.env.DEV && (
-            <Route path="/playground" element={<Playground />} />
+            <Route path={ROUTES.playground} element={<Playground />} />
             )}
 
             {/* Rutas privadas (ProtectedRoute) van después */}

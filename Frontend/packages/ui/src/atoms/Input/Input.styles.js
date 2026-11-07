@@ -34,6 +34,8 @@ export const getStyles = ({ colors, spacing, radius, typography }) =>
         },
         input: {
             flex: 1,
+            // Evita que el ancho intrínseco del TextInput desborde columnas estrechas.
+            minWidth: 0,
             padding: 0,
             outlineWidth: 0,
             color: colors.text,

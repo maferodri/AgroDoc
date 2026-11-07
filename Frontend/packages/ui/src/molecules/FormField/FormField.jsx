@@ -21,6 +21,7 @@ import { getStyles } from './FormField.styles';
  * @param {string} [helperText] Mensaje de ayuda cuando no hay error.
  * @param {boolean} [required] Marca el campo como obligatorio.
  * @param {string} [placeholder] Texto de ejemplo dentro del campo.
+ * @param {React.ReactNode} [labelAccessory] Acción alineada a la derecha de la etiqueta.
  */
 export function FormField({
     label,
@@ -30,6 +31,7 @@ export function FormField({
     helperText,
     required = false,
     placeholder,
+    labelAccessory,
     ...rest
 }) {
     const theme = useTheme();
@@ -41,10 +43,13 @@ export function FormField({
         <View style={styles.container}>
             {label != null && (
                 <View style={styles.labelRow}>
-                    <Text variant="label" color="text">{label}</Text>
-                    {required && (
-                        <Text variant="label" color="danger"> *</Text>
-                    )}
+                    <View style={styles.labelGroup}>
+                        <Text variant="label" color="text">{label}</Text>
+                        {required && (
+                            <Text variant="label" color="danger"> *</Text>
+                        )}
+                    </View>
+                    {labelAccessory}
                 </View>
             )}
 

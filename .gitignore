@@ -1,12 +1,16 @@
 .env
 __pycache__/
 *.pyc
+.pytest_cache/
+.ruff_cache/
 node_modules/
 dist/
 ml/datasets/
 *.onnx
 *.pt
 .venv/
+Frontend/graphify-out/
+Frontend/.agents
 
 
 # dependencies
@@ -72,6 +76,13 @@ dist-ssr
 # Agents
 .claude
 
+# Pruebas y artefactos generados
+.turbo/
+coverage/
+playwright-report/
+test-results/
+storybook-static/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -82,3 +93,4 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.continue/

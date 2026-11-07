@@ -1,0 +1,39 @@
+appId: com.agrodoc.mobile
+---
+# Flujo principal del agricultor: registro, login, foto, previsualización y
+# resultado con confianza. Requiere el backend local o un entorno de pruebas.
+- launchApp:
+    clearState: true
+- tapOn: "Crear Cuenta"
+- tapOn: "Nombre"
+- inputText: "Maestro Agricultor"
+- tapOn: "Correo Electrónico"
+- inputText: "maestro@agrodoc.com"
+- tapOn:
+    text: "Contraseña"
+    index: 0
+- inputText: "AgroDoc123"
+- tapOn: "Confirmar Contraseña"
+- inputText: "AgroDoc123"
+- tapOn: "Crear Cuenta"
+- assertVisible: "Diagnóstico de cultivos"
+
+# Cierra la sesión creada automáticamente para validar el login explícito.
+- tapOn: "Cerrar sesión"
+- tapOn:
+    text: "Cerrar sesión"
+    index: 1
+- assertVisible: "Iniciar Sesión"
+- tapOn: "Correo Electrónico"
+- inputText: "maestro@agrodoc.com"
+- tapOn: "Contraseña"
+- inputText: "AgroDoc123"
+- tapOn: "Iniciar Sesión"
+- assertVisible: "Diagnóstico de cultivos"
+
+# Captura (simulada con la foto de ejemplo), previsualización y resultado.
+- tapOn: "Tomar foto"
+- assertVisible: "Previsualización de la foto del cultivo"
+- tapOn: "Analizar foto"
+- assertVisible: "Confianza del diagnóstico"
+- assertVisible: "Analizar otra foto"

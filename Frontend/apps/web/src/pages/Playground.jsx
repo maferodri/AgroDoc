@@ -7,18 +7,24 @@ import { useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import {
     AGRODOC_LOGO,
+    Alert,
     Avatar,
+    Badge,
     Button,
     Checkbox,
     CheckboxInput,
+    ConfidenceBar,
+    ConfirmDialog,
     Divider,
     DynamicBar,
     FormField,
     Icon,
     ICON_NAMES,
     Input,
+    LoginForm,
     OrDivider,
     PasswordInput,
+    RegisterForm,
     StepIndicator,
     Text,
     useTheme,
@@ -664,6 +670,234 @@ const StepIndicatorDemo = () => {
     );
 };
 
+/** Ejemplo interactivo del organismo LoginForm en sus dos variantes. */
+const LoginFormPreview = ({ variant }) => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    // Simula el envío para revisar el estado de carga del botón principal.
+    const handleSubmit = () => {
+        setLoading(true);
+        setTimeout(() => {
+            setLoading(false);
+            alert(
+                `Iniciar sesión · ${email || 'sin correo'} · ${
+                    password ? 'contraseña capturada' : 'sin contraseña'
+                }`
+            );
+        }, 600);
+    };
+
+    return (
+        <LoginForm
+            variant={variant}
+            email={email}
+            password={password}
+            onChangeEmail={setEmail}
+            onChangePassword={setPassword}
+            onSubmit={handleSubmit}
+            onForgotPassword={() => alert('Recuperar contraseña')}
+            onRegister={() => alert('Crear cuenta')}
+            loading={loading}
+        />
+    );
+};
+
+/** Ejemplo interactivo del organismo RegisterForm en sus dos variantes. */
+const RegisterFormPreview = ({ variant }) => {
+    const [fullName, setFullName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [consent, setConsent] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    // Simula el envío para revisar el estado de carga del botón principal.
+    const handleSubmit = () => {
+        setLoading(true);
+        setTimeout(() => {
+            setLoading(false);
+            alert(
+                `Crear cuenta · ${fullName || 'sin nombre'} · ${
+                    email || 'sin correo'
+                } · ${consent ? 'con' : 'sin'} consentimiento`
+            );
+        }, 600);
+    };
+
+    return (
+        <RegisterForm
+            variant={variant}
+            fullName={fullName}
+            email={email}
+            password={password}
+            confirmPassword={confirmPassword}
+            consentAccepted={consent}
+            onChangeFullName={setFullName}
+            onChangeEmail={setEmail}
+            onChangePassword={setPassword}
+            onChangeConfirmPassword={setConfirmPassword}
+            onChangeConsent={setConsent}
+            onSubmit={handleSubmit}
+            onLogin={() => alert('Iniciar sesión')}
+            loading={loading}
+        />
+    );
+};
+
+const RegisterFormDemo = () => {
+    const theme = useTheme();
+
+    return (
+        <>
+            <SubTitle>Web (tarjeta sobre fondo del catálogo)</SubTitle>
+            {/* El fondo gris permite ver la tarjeta sin simular una página blanca. */}
+            <View
+                style={{
+                    backgroundColor: theme.colors.background,
+                    borderRadius: theme.radius.card,
+                    padding: theme.spacing.lg,
+                    alignItems: 'center',
+                }}
+            >
+                <View style={{ width: '100%', maxWidth: 620 }}>
+                    <RegisterFormPreview variant="web" />
+                </View>
+            </View>
+
+            <SubTitle>Móvil (sin tarjeta)</SubTitle>
+            <View
+                style={{
+                    backgroundColor: theme.colors.surface,
+                    borderRadius: theme.radius.card,
+                    padding: theme.spacing.lg,
+                    alignItems: 'center',
+                }}
+            >
+                <View style={{ width: '100%', maxWidth: 380 }}>
+                    <RegisterFormPreview variant="mobile" />
+                </View>
+            </View>
+        </>
+    );
+};
+
+const LoginFormDemo = () => {
+    const theme = useTheme();
+
+    return (
+        <>
+            <SubTitle>Web (tarjeta sobre fondo del catálogo)</SubTitle>
+            {/* El fondo gris permite ver la tarjeta sin simular una página blanca. */}
+            <View
+                style={{
+                    backgroundColor: theme.colors.background,
+                    borderRadius: theme.radius.card,
+                    padding: theme.spacing.lg,
+                    alignItems: 'center',
+                }}
+            >
+                <View style={{ width: '100%', maxWidth: 420 }}>
+                    <LoginFormPreview variant="web" />
+                </View>
+            </View>
+
+            <SubTitle>Móvil (sin tarjeta)</SubTitle>
+            <View
+                style={{
+                    backgroundColor: theme.colors.surface,
+                    borderRadius: theme.radius.card,
+                    padding: theme.spacing.lg,
+                    alignItems: 'center',
+                }}
+            >
+                <View style={{ width: '100%', maxWidth: 380 }}>
+                    <LoginFormPreview variant="mobile" />
+                </View>
+            </View>
+        </>
+    );
+};
+
+const BadgeDemo = () => {
+    const theme = useTheme();
+
+    return (
+        <View
+            style={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                gap: theme.spacing.sm,
+            }}
+        >
+            <Badge variant="healthy">Saludable</Badge>
+            <Badge variant="warning">Atención</Badge>
+            <Badge variant="danger">Riesgo</Badge>
+            <Badge variant="premium">Premium</Badge>
+        </View>
+    );
+};
+
+const ConfidenceBarDemo = () => {
+    const theme = useTheme();
+
+    return (
+        <View style={{ gap: theme.spacing.lg, maxWidth: 480 }}>
+            <ConfidenceBar value={92.8} />
+            <ConfidenceBar value={64.2} />
+            <ConfidenceBar value={34.7} />
+        </View>
+    );
+};
+
+const AlertDemo = () => {
+    const theme = useTheme();
+
+    return (
+        <View style={{ gap: theme.spacing.md, maxWidth: 480 }}>
+            <Alert
+                variant="info"
+                title="Nuevo diagnóstico disponible"
+                message="Tu análisis de la foto ya está listo."
+            />
+            <Alert
+                variant="weather"
+                title="Lluvia prevista"
+                message="Considera posponer el riego."
+            />
+            <Alert
+                variant="critical"
+                title="Plaga detectada"
+                message="Revisa el lote norte lo antes posible."
+            />
+        </View>
+    );
+};
+
+const ConfirmDialogDemo = () => {
+    const [visible, setVisible] = useState(false);
+
+    return (
+        <>
+            <Button
+                title="Eliminar cultivo"
+                variant="danger"
+                onPress={() => setVisible(true)}
+            />
+            <ConfirmDialog
+                visible={visible}
+                title="Eliminar cultivo"
+                message="Esta acción no se puede deshacer."
+                confirmLabel="Eliminar"
+                destructive
+                onConfirm={() => setVisible(false)}
+                onCancel={() => setVisible(false)}
+            />
+        </>
+    );
+};
+
 export default function Playground() {
     const theme = useTheme();
 
@@ -825,6 +1059,10 @@ export default function Playground() {
                         <SubTitle>Barra de tareas</SubTitle>
                         <TabBarDemo />
                     </CatalogItem>
+
+                    <CatalogItem name="Badge">
+                        <BadgeDemo />
+                    </CatalogItem>
                 </LevelSection>
 
                 <LevelSection
@@ -850,12 +1088,24 @@ export default function Playground() {
                     <CatalogItem name="StepIndicator">
                         <StepIndicatorDemo />
                     </CatalogItem>
+
+                    <CatalogItem name="ConfidenceBar">
+                        <ConfidenceBarDemo />
+                    </CatalogItem>
                 </LevelSection>
 
                 <LevelSection
                     title="Organismos"
                     description="Secciones completas formadas por átomos y moléculas."
                 >
+                    <CatalogItem name="LoginForm">
+                        <LoginFormDemo />
+                    </CatalogItem>
+
+                    <CatalogItem name="RegisterForm">
+                        <RegisterFormDemo />
+                    </CatalogItem>
+
                     <ComingSoon>
                         card de cultivo, header y navegación.
                     </ComingSoon>
@@ -865,7 +1115,13 @@ export default function Playground() {
                     title="Feedback"
                     description="Estados de respuesta para el usuario."
                 >
-                    <ComingSoon>alert, toast y estados vacíos.</ComingSoon>
+                    <CatalogItem name="Alert">
+                        <AlertDemo />
+                    </CatalogItem>
+
+                    <CatalogItem name="ConfirmDialog">
+                        <ConfirmDialogDemo />
+                    </CatalogItem>
                 </LevelSection>
             </View>
         </View>
