@@ -1,0 +1,67 @@
+
+name: Project CI Pipeline
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+
+  backend-ci:
+    name: FastAPI Backend (Lint & Test)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      PYTHONPATH: ${{ github.workspace }}/Backend
+      DATABASE_URL: postgresql+psycopg://test_user:test_password@localhost:5432/test_db
+      JWT_SECRET: ci-test-secret-at-least-32-characters-long
+
+    steps:
+      - name: Checkout de código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r Backend/requirements-dev.txt
+
+      - name: Ejecutar Linter (Ruff)
+        working-directory: Backend
+        run: ruff check .
+
+      - name: Verificar Formato (Ruff)
+        working-directory: Backend
+        run: ruff format --check .
+
+      - name: Ejecutar migraciones de Alembic
+        working-directory: Backend
+        run: alembic upgrade head
+
+      - name: Verificar migraciones de Alembic
+        working-directory: Backend
+        run: alembic check
+
+      - name: Ejecutar Pruebas (Pytest)
+        working-directory: Backend
+        run: pytest -q
