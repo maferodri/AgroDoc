@@ -30,12 +30,17 @@ services:
       MODEL_PATH: "${MODEL_PATH:-/models/model.onnx}"
       CONFIDENCE_THRESHOLD: "${CONFIDENCE_THRESHOLD:-0.70}"
     volumes:
+      - ../Backend:/code:z
       - ../ml/export:/models:ro
     depends_on:
       postgres: { condition: service_healthy }
 
   web:
-    build: ../Frontend
+    build: 
+      context: ../Frontend
+      dockerfile: apps/web/Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8000/api/v1
     restart: unless-stopped
     networks: [agrodoc]
     ports: ["3000:80"]

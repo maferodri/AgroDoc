@@ -10,3 +10,30 @@ ml/datasets/
 *.pt
 .venv/
 .continue/
+# Expo / React Native
+.expo/
+web-build/
+expo-env.d.ts
+*.apk
+*.aab
+*.ipa
+.kotlin/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+/android
+/ios
+.metro-health-check*
+
+# Frontend monorepo
+.turbo/
+coverage/
+playwright-report/
+test-results/
+storybook-static/
+node_modules
+dist
+*.local
+graphify-out/

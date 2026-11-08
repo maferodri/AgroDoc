@@ -1,0 +1,26 @@
+/* Documento: estilos globales mínimos de la app web.
+   Ajustan el documento para que las pantallas ocupen el viewport completo.
+   El tema y los colores viven en @agrodoc/tokens, no aquí. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+}

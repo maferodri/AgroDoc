@@ -1,0 +1,1 @@
+{"name":"@agrodoc/store","version":"0.0.1","main":"index.js","dependencies":{"@tanstack/react-query":"^5.104.1","zod":"^4.6.5","zustand":"^5.0.15"}}
