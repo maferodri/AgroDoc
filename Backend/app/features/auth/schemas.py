@@ -29,10 +29,6 @@ UserRole = Literal["farmer", "agronomist", "admin"]
 NormalizedEmail = Annotated[EmailStr, BeforeValidator(validators.normalize_email)]
 TrimmedStr = Annotated[str, BeforeValidator(validators.strip_text)]
 
-#Tipos reutilizables
-NormalizedEmail = Annotated[EmailStr, BeforeValidator(validators.normalize_email)]
-TrimmedStr = Annotated[str, BeforeValidator(validators.strip_text)]
-
 
 class User(BaseModel):
     """Representación pública del usuario. Nunca incluye `password_hash`."""
@@ -81,13 +77,6 @@ class RegisterRequest(BaseModel):
             raise ValueError("La contraseña debe incluir " + ", ".join(errors))
         return value
 
-
-class LoginRequest(BaseModel):
-
-    model_config = ConfigDict(extra="forbid")
-
-    email: NormalizedEmail
-    password: str = Field(min_length=1, max_length=128)
 
 class LoginRequest(BaseModel):
 

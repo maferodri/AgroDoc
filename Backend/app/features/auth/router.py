@@ -14,8 +14,6 @@ from app.features.auth.models import User
 from app.features.auth.schemas import AuthResponse, LoginRequest, RegisterRequest
 from app.features.auth.schemas import User as UserSchema
 from app.shared.schemas import ModuleHealth
-from app.features.auth.models import User
-from app.features.auth.schemas import AuthResponse, RegisterRequest, LoginRequest, User as UserSchema
 
 router = APIRouter(tags=["auth"])
 
