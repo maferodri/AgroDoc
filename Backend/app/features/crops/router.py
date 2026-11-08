@@ -15,6 +15,7 @@ router = APIRouter(tags=["crops"])
 def module_health() -> ModuleHealth:
     return service.health()
 
+
 # Próximos endpoints del slice (ver contrato):
 #   GET/POST /crops, GET/PATCH/DELETE /crops/{id}, GET/POST /crops/{id}/events
 #   GET /crop-types, GET/POST /farms

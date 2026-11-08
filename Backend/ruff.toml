@@ -1,8 +1,11 @@
 target-version = "py312"
 line-length = 100
 
+extend-exclude = ["alembic/versions"]
+
 [lint]
 extend-select = ["I", "UP", "B"]
+# Migraciones autogeneradas por Alembic: son snapshots históricos, no se lintan.
 
 [lint.flake8-bugbear]
 # FastAPI inyecta dependencias con `Depends(...)` en los defaults: es el patrón

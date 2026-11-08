@@ -62,9 +62,7 @@ class Farm(Base):
         server_default=text("gen_random_uuid()"),
     )
     # Ref lógica a users.id (módulo auth). Sin FK.
-    owner_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), nullable=False, index=True
-    )
+    owner_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     department: Mapped[str | None] = mapped_column(String(100))
     municipality: Mapped[str | None] = mapped_column(String(100))
@@ -100,9 +98,7 @@ class Crop(Base):
         server_default=text("gen_random_uuid()"),
     )
     # Ref lógica a users.id (módulo auth). Sin FK.
-    owner_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), nullable=False, index=True
-    )
+    owner_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
     # FK real: farms es del mismo módulo. Si se borra la finca, el cultivo queda.
     farm_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),

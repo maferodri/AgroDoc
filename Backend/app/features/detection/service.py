@@ -1,4 +1,3 @@
-
 """Inferencia de plagas a partir de una imagen.
 
 Este módulo no tiene base de datos: carga el ONNX indicado por `MODEL_PATH`
@@ -39,9 +38,7 @@ def _session():
     try:
         import onnxruntime as ort
     except ImportError as exc:
-        raise DetectionUnavailableError(
-            "onnxruntime no está instalado en el backend."
-        ) from exc
+        raise DetectionUnavailableError("onnxruntime no está instalado en el backend.") from exc
 
     try:
         return ort.InferenceSession(
@@ -64,9 +61,7 @@ def _config() -> dict:
     metadata = _metadata()
     missing = [key for key in _REQUIRED_METADATA if key not in metadata]
     if missing:
-        raise DetectionUnavailableError(
-            "Faltan metadatos en el ONNX: " + ", ".join(missing)
-        )
+        raise DetectionUnavailableError("Faltan metadatos en el ONNX: " + ", ".join(missing))
 
     labels = json.loads(metadata["labels"])
     input_size = tuple(int(value) for value in json.loads(metadata["input_size"]))
@@ -76,9 +71,7 @@ def _config() -> dict:
     if not labels:
         raise DetectionUnavailableError("La lista de etiquetas del modelo está vacía.")
     if len(input_size) != 2:
-        raise DetectionUnavailableError(
-            "`input_size` debe tener dos valores: [ancho, alto]."
-        )
+        raise DetectionUnavailableError("`input_size` debe tener dos valores: [ancho, alto].")
     if mean.shape != (3,) or std.shape != (3,):
         raise DetectionUnavailableError("`mean` y `std` deben tener tres valores RGB.")
 
@@ -101,9 +94,7 @@ def _resize_for_model(image: Image.Image, config: dict) -> Image.Image:
         return image.resize(input_size, Image.Resampling.BILINEAR)
 
     if config["resize_mode"] != "center_crop":
-        raise DetectionUnavailableError(
-            f"`resize_mode` no soportado: {config['resize_mode']}"
-        )
+        raise DetectionUnavailableError(f"`resize_mode` no soportado: {config['resize_mode']}")
 
     target_short = config["resize_size"]
     width, height = image.size
@@ -149,9 +140,7 @@ def predict(image_bytes: bytes, top_k: int = 5) -> Prediction:
     if config["output_type"] == "logits":
         scores = _softmax(scores)
     elif config["output_type"] != "probabilities":
-        raise DetectionUnavailableError(
-            f"`output_type` no soportado: {config['output_type']}"
-        )
+        raise DetectionUnavailableError(f"`output_type` no soportado: {config['output_type']}")
 
     if scores.size != len(labels):
         raise DetectionUnavailableError(
@@ -160,10 +149,7 @@ def predict(image_bytes: bytes, top_k: int = 5) -> Prediction:
 
     count = max(1, min(top_k, len(labels)))
     order = np.argsort(scores)[::-1][:count]
-    top = [
-        TopKPrediction(label=labels[index], confidence=float(scores[index]))
-        for index in order
-    ]
+    top = [TopKPrediction(label=labels[index], confidence=float(scores[index])) for index in order]
 
     return Prediction(
         label=top[0].label,

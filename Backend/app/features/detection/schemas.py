@@ -1,4 +1,3 @@
-
 # Backend/app/features/detection/schemas.py
 from pydantic import BaseModel
 
