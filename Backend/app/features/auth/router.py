@@ -22,13 +22,15 @@ router = APIRouter(tags=["auth"])
 def module_health() -> ModuleHealth:
     return service.health()
 
-#Post Registrar usuario
+
+# Post Registrar usuario
 @router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
 def register(
     payload: RegisterRequest,
     db: Session = Depends(get_db),
 ) -> AuthResponse:
     return service.register(db, payload)
+
 
 @router.post("/login", response_model=AuthResponse, summary="Iniciar sesión")
 def login(payload: LoginRequest, db: Session = Depends(get_db)) -> AuthResponse:
@@ -38,6 +40,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> AuthResponse:
 @router.get("/me", response_model=UserSchema, summary="Usuario autenticado")
 def me(current_user: User = Depends(get_current_user)) -> UserSchema:
     return UserSchema.model_validate(current_user)
+
 
 # Próximos endpoints del slice (ver contrato):
 #   POST /auth/register, POST /auth/login, POST /auth/refresh, POST /auth/logout

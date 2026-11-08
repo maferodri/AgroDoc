@@ -135,9 +135,7 @@ class Diagnosis(Base):
         server_default=text("gen_random_uuid()"),
     )
     # Ref lógica a users.id (módulo auth). Sin FK.
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), nullable=False, index=True
-    )
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
     # Ref lógica a crops.id (módulo crops). Nullable: se puede diagnosticar
     # una foto sin tener un cultivo guardado.
     crop_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), index=True)
@@ -167,9 +165,7 @@ class Diagnosis(Base):
 
     # Ref lógica a consultations.id (módulo consultations). Se llena cuando
     # el caso se escala a un agrónomo.
-    consultation_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), unique=True
-    )
+    consultation_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), unique=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()

@@ -51,9 +51,7 @@ class Consultation(Base):
         server_default=text("gen_random_uuid()"),
     )
     # Ref lógica a diagnoses.id (módulo diagnosis). Sin FK.
-    diagnosis_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), nullable=False, unique=True
-    )
+    diagnosis_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, unique=True)
     # Ref lógica a users.id (módulo auth). Sin FK.
     requester_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     # Ref lógica a users.id (módulo auth). Nullable: el caso nace sin agrónomo.

@@ -22,10 +22,10 @@ from pydantic import (
 
 from . import validators
 
-#Restringe un String a un conjunto fijo de valores
+# Restringe un String a un conjunto fijo de valores
 UserRole = Literal["farmer", "agronomist", "admin"]
 
-#Tipos reutilizables
+# Tipos reutilizables
 NormalizedEmail = Annotated[EmailStr, BeforeValidator(validators.normalize_email)]
 TrimmedStr = Annotated[str, BeforeValidator(validators.strip_text)]
 
@@ -72,14 +72,13 @@ class RegisterRequest(BaseModel):
 
     @field_validator("password")
     @classmethod
-    def _check_password(cls, value:str) -> str:
+    def _check_password(cls, value: str) -> str:
         if errors := validators.password_policy_errors(value):
             raise ValueError("La contraseña debe incluir " + ", ".join(errors))
         return value
 
 
 class LoginRequest(BaseModel):
-
     model_config = ConfigDict(extra="forbid")
 
     email: NormalizedEmail

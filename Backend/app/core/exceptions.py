@@ -38,6 +38,7 @@ class ForbiddenError(DomainError):
     status_code = status.HTTP_403_FORBIDDEN
     code = "forbidden"
 
+
 async def _request_validation_handler(
     request: Request, exc: RequestValidationError
 ) -> JSONResponse:
@@ -46,6 +47,7 @@ async def _request_validation_handler(
         status_code=400,
         content={"error": "validation_error", "message": message, "field": field},
     )
+
 
 def _validation_message(exc: RequestValidationError) -> tuple[str, str | None]:
     errors = exc.errors()
@@ -58,6 +60,7 @@ def _validation_message(exc: RequestValidationError) -> tuple[str, str | None]:
     field = ".".join(str(part) for part in first.get("loc", ())[1:]) or None
     return message, field
 
+
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(DomainError)
     async def _domain_error_handler(_: Request, exc: DomainError) -> JSONResponse:
@@ -65,6 +68,7 @@ def register_exception_handlers(app: FastAPI) -> None:
             status_code=exc.status_code,
             content={"error": {"code": exc.code, "message": exc.message}},
         )
+
     app.add_exception_handler(
         RequestValidationError,
         # El handler es específico de `RequestValidationError`; Starlette tipa
