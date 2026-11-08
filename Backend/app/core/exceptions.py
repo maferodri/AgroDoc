@@ -1,8 +1,11 @@
 """Errores de dominio comunes y su traducción a respuestas HTTP."""
 
+from typing import cast
+
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.types import ExceptionHandler
 
 
 class DomainError(Exception):
@@ -62,4 +65,9 @@ def register_exception_handlers(app: FastAPI) -> None:
             status_code=exc.status_code,
             content={"error": {"code": exc.code, "message": exc.message}},
         )
-    app.add_exception_handler(RequestValidationError, _request_validation_handler)
+    app.add_exception_handler(
+        RequestValidationError,
+        # El handler es específico de `RequestValidationError`; Starlette tipa
+        # `ExceptionHandler` para cualquier `Exception`, de ahí el cast.
+        cast(ExceptionHandler, _request_validation_handler),
+    )

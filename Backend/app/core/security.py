@@ -10,7 +10,6 @@ import jwt
 from pwdlib import PasswordHash
 
 from app.core.config import settings
-from app.core.exceptions import UnauthorizedError
 
 _password_hash = PasswordHash.recommended()
 

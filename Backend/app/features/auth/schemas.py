@@ -8,16 +8,22 @@ Cubre el registro de usuarios (`POST /auth/register`):
 """
 
 from datetime import datetime
-from typing import Literal, Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator, BeforeValidator, field_validator
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    EmailStr,
+    Field,
+    field_validator,
+)
 
 from . import validators
 
-#Restringe un String a un conjunto fijo de valores 
+#Restringe un String a un conjunto fijo de valores
 UserRole = Literal["farmer", "agronomist", "admin"]
-RegisterableRole = Literal["farmer", "agronomist"]
 
 #Tipos reutilizables
 NormalizedEmail = Annotated[EmailStr, BeforeValidator(validators.normalize_email)]
@@ -63,9 +69,6 @@ class RegisterRequest(BaseModel):
     email: NormalizedEmail
     password: str = Field(min_length=8, max_length=128)
     full_name: TrimmedStr = Field(min_length=1, max_length=255)
-    role: RegisterableRole
-    specialty: str | None = Field(default=None, max_length=255)
-    license_number: str | None = Field(default=None, max_length=100)
 
     @field_validator("password")
     @classmethod
@@ -74,13 +77,6 @@ class RegisterRequest(BaseModel):
             raise ValueError("La contraseña debe incluir " + ", ".join(errors))
         return value
 
-    @model_validator(mode="after")
-    def _check_agronomist_fields(self) -> "RegisterRequest":
-        if self.role != "agronomist" and (self.specialty or self.license_number):
-            raise ValueError(
-                "specialty y license_number solo aplican al rol 'agronomist'"
-            )
-        return self
 
 class LoginRequest(BaseModel):
 
