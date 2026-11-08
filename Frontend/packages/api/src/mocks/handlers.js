@@ -155,47 +155,58 @@ function diagnosisFromImage(image = '') {
     };
 }
 
+/** Registro de cuenta; atiende tanto `/auth/register` como `/register`. */
+async function handleRegister({ request }) {
+    const body = await request.json();
+
+    if (users.some((user) => user.email === body.email)) {
+        return errorResponse(409, 'EMAIL_TAKEN', 'El correo ya está registrado.');
+    }
+
+    const user = {
+        id: crypto.randomUUID(),
+        email: body.email,
+        full_name: body.full_name,
+        role: body.role === 'agronomist' ? 'agronomist' : 'farmer',
+        is_active: true,
+        created_at: now,
+    };
+
+    users = [...users, user];
+
+    return HttpResponse.json(sessionFor(user), { status: 201 });
+}
+
+/** Inicio de sesión; atiende tanto `/auth/login` como `/login`. */
+async function handleLogin({ request }) {
+    const body = await request.json();
+    const user = users.find((candidate) => candidate.email === body.email);
+
+    if (!user || !body.password) {
+        return errorResponse(
+            401,
+            'INVALID_CREDENTIALS',
+            'Usuario o contraseña incorrectos.'
+        );
+    }
+
+    if (!user.is_active) {
+        return errorResponse(403, 'USER_INACTIVE', 'La cuenta está desactivada.');
+    }
+
+    return HttpResponse.json(sessionFor(user));
+}
+
 /** Handlers que cubren auth, diagnóstico, consultas, pagos y administración. */
 export const handlers = [
-    http.post(`${API_BASE_URL}/auth/register`, async ({ request }) => {
-        const body = await request.json();
+    // Alias de ruta: `openapi.yaml` define /auth/register y /auth/login, pero el
+    // backend real y `authApi.js` usan /register y /login. Se cubren ambas rutas
+    // con el mismo handler para que los mocks no dependan de una en particular.
+    http.post(`${API_BASE_URL}/auth/register`, handleRegister),
+    http.post(`${API_BASE_URL}/register`, handleRegister),
 
-        if (users.some((user) => user.email === body.email)) {
-            return errorResponse(409, 'EMAIL_TAKEN', 'El correo ya está registrado.');
-        }
-
-        const user = {
-            id: crypto.randomUUID(),
-            email: body.email,
-            full_name: body.full_name,
-            role: body.role === 'agronomist' ? 'agronomist' : 'farmer',
-            is_active: true,
-            created_at: now,
-        };
-
-        users = [...users, user];
-
-        return HttpResponse.json(sessionFor(user), { status: 201 });
-    }),
-
-    http.post(`${API_BASE_URL}/auth/login`, async ({ request }) => {
-        const body = await request.json();
-        const user = users.find((candidate) => candidate.email === body.email);
-
-        if (!user || !body.password) {
-            return errorResponse(
-                401,
-                'INVALID_CREDENTIALS',
-                'Usuario o contraseña incorrectos.'
-            );
-        }
-
-        if (!user.is_active) {
-            return errorResponse(403, 'USER_INACTIVE', 'La cuenta está desactivada.');
-        }
-
-        return HttpResponse.json(sessionFor(user));
-    }),
+    http.post(`${API_BASE_URL}/auth/login`, handleLogin),
+    http.post(`${API_BASE_URL}/login`, handleLogin),
 
     http.post(`${API_BASE_URL}/auth/refresh`, async ({ request }) => {
         const body = await request.json();

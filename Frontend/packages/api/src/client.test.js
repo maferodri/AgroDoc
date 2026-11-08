@@ -19,7 +19,7 @@ describe('request', () => {
     });
 
     it('devuelve el cuerpo JSON de una respuesta correcta', async () => {
-        const session = await request('/login', {
+        const session = await request('/auth/login', {
             method: 'POST',
             body: { email: 'admin@agrodoc.com', password: 'AgroDoc123' },
         });
@@ -29,7 +29,7 @@ describe('request', () => {
 
     it('traduce los errores HTTP a ApiError', async () => {
         await expect(
-            request('/login', {
+            request('/auth/login', {
                 method: 'POST',
                 body: { email: 'nadie@agrodoc.com', password: 'x' },
             })
