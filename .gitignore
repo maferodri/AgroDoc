@@ -37,3 +37,4 @@ node_modules
 dist
 *.local
 graphify-out/
+.agents/
