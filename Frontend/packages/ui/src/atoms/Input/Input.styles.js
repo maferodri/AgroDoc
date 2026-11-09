@@ -37,7 +37,9 @@ export const getStyles = ({ colors, spacing, radius, typography }) =>
             // Evita que el ancho intrínseco del TextInput desborde columnas estrechas.
             minWidth: 0,
             padding: 0,
-            outlineWidth: 0,
+            // El anillo de foco lo dibuja el contenedor; en web hay que anular el
+            // outline nativo porque `outlineWidth: 0` no lo oculta con `style: auto`.
+            outlineStyle: 'none',
             color: colors.text,
             fontSize: typography.body.fontSize,
             fontWeight: typography.body.fontWeight,
