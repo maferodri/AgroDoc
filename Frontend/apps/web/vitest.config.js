@@ -17,6 +17,10 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: [
+      {
+        find: /^@react-native\/assets-registry\/registry$/,
+        replacement: 'react-native-web/asset-registry',
+      },
       { find: /^react-native-svg$/, replacement: reactNativeSvgWeb },
       { find: /^react-native$/, replacement: 'react-native-web' },
     ],

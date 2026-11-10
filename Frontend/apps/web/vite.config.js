@@ -4,6 +4,7 @@
  */
 import path from 'node:path'
 import { createRequire } from 'node:module'
+import { fileURLToPath } from 'node:url'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
@@ -14,6 +15,12 @@ const require = createRequire(import.meta.url)
 const reactNativeSvgWeb = path.join(
   path.dirname(require.resolve('react-native-svg/package.json')),
   'lib/module/ReactNativeSVG.web.js',
+)
+
+// `react-native-svg@15.16` requiere este módulo nativo (solo Android) que
+// `react-native-web` no puede resolver. En web nunca se ejecuta.
+const reactNativeSvgSoundShim = fileURLToPath(
+  new URL('./shims/react-native-svg-sound.js', import.meta.url),
 )
 
 // https://vite.dev/config/
@@ -39,6 +46,14 @@ export default defineConfig({
   },
   resolve: {
     alias: [
+      {
+        find: /^(?:\.\.\/)+fabric\/NativeSvgSoundModule$/,
+        replacement: reactNativeSvgSoundShim,
+      },
+      {
+        find: /^@react-native\/assets-registry\/registry$/,
+        replacement: 'react-native-web/asset-registry',
+      },
       { find: /^react-native-svg$/, replacement: reactNativeSvgWeb },
       { find: /^react-native$/, replacement: 'react-native-web' },
     ],
