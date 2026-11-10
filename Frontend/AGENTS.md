@@ -71,7 +71,7 @@ Frontend/
 - Los handlers MSW cubren login por rol, registro, diagnóstico alto/medio/bajo, consultas, pagos, suscripción y administración.
 - Playwright intercepta `**/api/v1/**` con `apps/web/e2e/fixtures.js`; no requiere backend.
 - En Vitest, `react-native` se aliasa a `react-native-web` y `react-native-svg` a su build web.
-- Si una prueba de UI falla por versiones de React, revisar que `react` y `react-dom` estén fijados a `19.2.3` en ui/features/web (misma versión que Expo).
+- Si una prueba de UI falla por versiones de React, revisar que `react` y `react-dom` estén fijados a `19.3.0` en ui/features/web (misma versión que Expo).
 
 ## Flujo tokens → UI → app
 
@@ -117,6 +117,7 @@ pnpm --filter @agrodoc/mobile start
 ```
 
 - Para dependencias de Expo usar `npx expo install` dentro de `apps/mobile`.
+- En Expo Go no hace falta configurar la URL: se deriva la IP de Metro y el puerto 8000. Para otra red, túnel o producción, define `EXPO_PUBLIC_API_URL` (ver `apps/mobile/.env.example`).
 - Tras agregar dependencias workspace, ejecutar `pnpm install`.
 - No existe `pnpm build` en la raíz; usar filtros o `pnpm turbo build`.
 - `pnpm test` solo ejecuta paquetes con script `test`; la tarea está en `turbo.json` y usa caché.
@@ -144,7 +145,7 @@ pnpm --filter @agrodoc/mobile start
 | UI organismos | 🟡 | `LoginForm`, `RegisterForm`, `Alert`, `ConfirmDialog`; faltan header/navegación |
 | Playground web | ✅ | catálogo por niveles con Badge, ConfidenceBar, Alert y ConfirmDialog |
 | App web | ✅ | login, registro, guard por rol, panel admin (activar/desactivar) y bandeja del agrónomo |
-| App móvil | ✅ | login, registro, bloqueo admin y flujo agricultor foto → preview → diagnóstico |
+| App móvil | ✅ | login, registro, bloqueo admin y flujo agricultor foto → preview → diagnóstico; backend por IP de Metro o `EXPO_PUBLIC_API_URL` |
 | Feature auth | ✅ | esquemas, servicios, hooks (401/409), store, `RoleGuard`, recuperación y `LogoutButton` |
 | Feature diagnóstico | ✅ | análisis con MSW, confianza alta/media/baja, consulta con agrónomo |
 | Feature suscripciones | ✅ | plan básico sin muro de pago y registro de pagos |
@@ -171,7 +172,6 @@ Reglas de escritura:
 
 ## Pendientes
 
-- Configurar `setApiBaseUrl` de `@agrodoc/api` al arrancar en móvil. Hoy usa el default `http://localhost:8000/api/v1`, que desde un dispositivo o emulador no apunta al host de desarrollo; definir una variable pública de Expo (p. ej. `EXPO_PUBLIC_API_URL`) y llamar a `setApiBaseUrl` antes de montar la app (la web ya lo hace en `apps/web/src/main.jsx` con `VITE_API_URL`).
 - Persistir la sesión móvil con almacenamiento seguro (hoy queda en memoria).
 - Crear pantalla y ruta web de recuperación de contraseña (el hook ya existe).
 - Implementar cámara real en móvil (hoy el flujo usa una foto local de ejemplo).
@@ -189,6 +189,7 @@ Reglas de escritura:
 - Los iconos se referencian por `name`; usar `ICON_NAMES` para validar nombres disponibles y no importar SVG sueltos.
 - El átomo `Text` choca con el `Text` de `react-native`; importarlo como alias (p. ej. `Text as UIText`).
 - **URL de API `undefined` en el navegador** → Vite solo inyecta variables `VITE_*` vía `import.meta.env`; `process.env` no existe en el bundle. La web fija la URL en `main.jsx`; el paquete `@agrodoc/api` mantiene un valor por defecto literal para móvil y tests.
+- **API móvil inalcanzable en Expo Go** → `apps/mobile/src/config/api.js` resuelve la URL al arrancar: `EXPO_PUBLIC_API_URL`, luego la IP de Metro con puerto 8000 y, por último, `localhost`. En producción la variable es obligatoria; en modo túnel (`*.exp.direct`) también, porque el túnel no expone el backend.
 - **Iconos no cargan en dev** → Vite 8 no aplica `resolve.extensions` al optimizer; revisar `optimizeDeps.rolldownOptions.resolve.extensions` y el alias de `react-native-svg` en `apps/web/vite.config.js`.
 - El Playground no existe en producción (`import.meta.env.DEV`).
 - `packages/ui/src/theme/tokens.js` existe pero **no** está exportado en `index.js`; no asumir que está disponible.

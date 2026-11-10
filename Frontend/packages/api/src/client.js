@@ -86,7 +86,11 @@ export async function request(path, { method = 'GET', body, token, signal, heade
         });
     } catch (error) {
         // `fetch` solo rechaza por red/abort: se traduce a un error del dominio.
-        throw new ApiError('No se pudo conectar con el servidor.', {
+        // En desarrollo se muestra la URL intentada para diagnosticar redes.
+        // `NODE_ENV` se inlinea en build (Metro y Vite); no se lee en runtime.
+        const detail = process.env.NODE_ENV === 'production' ? '' : ` (${baseUrl})`;
+
+        throw new ApiError(`No se pudo conectar con el servidor.${detail}`, {
             code: error?.name === 'AbortError' ? 'ABORTED' : 'NETWORK_ERROR',
             cause: error,
         });
