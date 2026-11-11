@@ -190,7 +190,7 @@ Reglas de escritura:
 - El átomo `Text` choca con el `Text` de `react-native`; importarlo como alias (p. ej. `Text as UIText`).
 - **URL de API `undefined` en el navegador** → Vite solo inyecta variables `VITE_*` vía `import.meta.env`; `process.env` no existe en el bundle. La web fija la URL en `main.jsx`; el paquete `@agrodoc/api` mantiene un valor por defecto literal para móvil y tests.
 - **API móvil inalcanzable en Expo Go** → `apps/mobile/src/config/api.js` resuelve la URL al arrancar: `EXPO_PUBLIC_API_URL`, luego la IP de Metro con puerto 8000 y, por último, `localhost`. En producción la variable es obligatoria; en modo túnel (`*.exp.direct`) también, porque el túnel no expone el backend.
-- **Iconos no cargan en dev** → Vite 8 no aplica `resolve.extensions` al optimizer; revisar `optimizeDeps.rolldownOptions.resolve.extensions` y el alias de `react-native-svg` en `apps/web/vite.config.js`.
+- **Iconos no cargan en dev o falla `TurboModuleRegistry`** → el optimizer de Vite 8 no hereda `resolve.alias` ni `resolve.extensions`; revisar `optimizeDeps.rolldownOptions` en `apps/web/vite.config.js` (los alias deben repetirse ahí en formato objeto).
 - El Playground no existe en producción (`import.meta.env.DEV`).
 - `packages/ui/src/theme/tokens.js` existe pero **no** está exportado en `index.js`; no asumir que está disponible.
 - `Text` resuelve su `fontFamily` con `fontFamily.web.js`; en web agrega fallback sans porque Inter no se carga por defecto.

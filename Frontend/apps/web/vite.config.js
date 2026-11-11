@@ -23,6 +23,28 @@ const reactNativeSvgSoundShim = fileURLToPath(
   new URL('./shims/react-native-svg-sound.js', import.meta.url),
 )
 
+const resolveAlias = [
+  {
+    find: /^(?:\.\.\/)+fabric\/NativeSvgSoundModule$/,
+    replacement: reactNativeSvgSoundShim,
+  },
+  {
+    find: /^@react-native\/assets-registry\/registry$/,
+    replacement: 'react-native-web/asset-registry',
+  },
+  { find: /^react-native-svg$/, replacement: reactNativeSvgWeb },
+  { find: /^react-native$/, replacement: 'react-native-web' },
+]
+
+// El optimizer usa un build de rolldown aparte que no hereda `resolve.alias` y
+// solo aliasa imports bare, así que hay que repetirlos en formato objeto.
+const optimizeDepsAlias = {
+  'react-native-svg': reactNativeSvgWeb,
+  'react-native': 'react-native-web',
+  '@react-native/assets-registry/registry': 'react-native-web/asset-registry',
+  '../fabric/NativeSvgSoundModule': reactNativeSvgSoundShim,
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
@@ -31,6 +53,7 @@ export default defineConfig({
   optimizeDeps: {
     rolldownOptions: {
       resolve: {
+        alias: optimizeDepsAlias,
         extensions: [
           '.web.jsx',
           '.web.js',
@@ -45,18 +68,7 @@ export default defineConfig({
     },
   },
   resolve: {
-    alias: [
-      {
-        find: /^(?:\.\.\/)+fabric\/NativeSvgSoundModule$/,
-        replacement: reactNativeSvgSoundShim,
-      },
-      {
-        find: /^@react-native\/assets-registry\/registry$/,
-        replacement: 'react-native-web/asset-registry',
-      },
-      { find: /^react-native-svg$/, replacement: reactNativeSvgWeb },
-      { find: /^react-native$/, replacement: 'react-native-web' },
-    ],
+    alias: resolveAlias,
     extensions: ['.web.jsx', '.web.js', '.jsx', '.js', '.json'],
   },
 })
