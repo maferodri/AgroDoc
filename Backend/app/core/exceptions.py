@@ -39,6 +39,16 @@ class ForbiddenError(DomainError):
     code = "forbidden"
 
 
+class InvalidPasswordResetCodeError(DomainError):
+    status_code = status.HTTP_400_BAD_REQUEST
+    code = "invalid_reset_code"
+
+
+class InvalidPasswordResetTokenError(DomainError):
+    status_code = status.HTTP_400_BAD_REQUEST
+    code = "invalid_reset_token"
+
+
 async def _request_validation_handler(
     request: Request, exc: RequestValidationError
 ) -> JSONResponse:

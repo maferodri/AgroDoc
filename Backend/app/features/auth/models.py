@@ -1,6 +1,7 @@
 """Modelos SQLAlchemy del módulo auth.
 
-Tablas del slice: `users`, `agronomist_profiles`, `refresh_tokens`.
+Tablas del slice: `users`, `agronomist_profiles`, `refresh_tokens` y
+`password_reset_codes`.
 Se importan desde `alembic/env.py` para que `--autogenerate` las detecte.
 
 Reglas del slice:
@@ -16,6 +17,8 @@ from sqlalchemy import (
     CheckConstraint,
     DateTime,
     ForeignKey,
+    Index,
+    Integer,
     String,
     Text,
     func,
@@ -70,6 +73,11 @@ class User(Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+    password_reset_codes: Mapped[list["PasswordResetCode"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
 
 class AgronomistProfile(Base):
@@ -115,3 +123,41 @@ class RefreshToken(Base):
     )
 
     user: Mapped["User"] = relationship(back_populates="refresh_tokens")
+
+
+class PasswordResetCode(Base):
+    """Código de recuperación de contraseña (de un solo uso).
+
+    Se guarda el hash HMAC-SHA256 del código y el hash SHA-256 del token de
+    recuperación, nunca sus valores en claro. `attempts` limita la fuerza bruta
+    en línea; al alcanzar el máximo el código se invalida y el usuario debe
+    pedir uno nuevo.
+    """
+
+    __tablename__ = "password_reset_codes"
+    __table_args__ = (Index("ix_password_reset_codes_user_id_created_at", "user_id", "created_at"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        server_default=text("gen_random_uuid()"),
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    code_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    reset_token_hash: Mapped[str | None] = mapped_column(String(64), unique=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    reset_token_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    attempts: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default=text("0")
+    )
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    user: Mapped["User"] = relationship(back_populates="password_reset_codes")
