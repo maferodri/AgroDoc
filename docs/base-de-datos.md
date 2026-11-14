@@ -59,7 +59,7 @@ flowchart LR
 
 | Módulo | Tablas | Contenido |
 |---|---|---|
-| `auth` | `users`, `agronomist_profiles`, `refresh_tokens` | Cuentas, perfiles de agrónomo y sesiones |
+| `auth` | `users`, `agronomist_profiles`, `refresh_tokens`, `password_reset_codes` | Cuentas, perfiles de agrónomo, sesiones y recuperación de contraseña |
 | `crops` | `crop_types`, `farms`, `crops`, `crop_events` | Catálogo de cultivos, fincas, cultivos e historial |
 | `diagnosis` | `pests`, `pest_crops`, `treatments`, `diagnoses` | Catálogo de plagas, tratamientos y resultados |
 | `consultations` | `consultations`, `consultation_messages` | Casos escalados y conversación |
@@ -109,6 +109,7 @@ flowchart LR
 erDiagram
     users ||--o| agronomist_profiles : "perfil"
     users ||--o{ refresh_tokens : "sesiones"
+    users ||--o{ password_reset_codes : "recuperación"
 
     users {
         uuid id PK
@@ -130,6 +131,18 @@ erDiagram
         text token_hash UK
         timestamptz expires_at
         timestamptz revoked_at
+    }
+    password_reset_codes {
+        uuid id PK
+        uuid user_id FK
+        text code_hash
+        text reset_token_hash UK
+        timestamptz expires_at
+        timestamptz reset_token_expires_at
+        integer attempts
+        timestamptz verified_at
+        timestamptz used_at
+        timestamptz created_at
     }
 ```
 
@@ -253,6 +266,7 @@ erDiagram
 | `users` | `auth` | `crops`, `diagnosis`, `consultations` | Cuentas y roles |
 | `agronomist_profiles` | `auth` | `consultations` | Elegir agrónomo disponible |
 | `refresh_tokens` | `auth` | — | Renovar sesión |
+| `password_reset_codes` | `auth` | — | Códigos de recuperación (hashes, un solo uso) |
 | `crop_types` | `crops` | `diagnosis` | Catálogo: maíz, café, frijol |
 | `farms` | `crops` | — | Fincas del usuario |
 | `crops` | `crops` | `diagnosis`, `consultations` | Cultivos guardados y contexto del caso |
@@ -306,10 +320,11 @@ Todas las llamadas son funciones del mismo proceso. No hay HTTP interno ni trans
 * **Reentrenamiento:** cuando el agrónomo responde, `verified_label` y `model_was_correct` quedan como etiqueta verificada por un experto. Es una fuente de datos reales de la región para el fine-tuning del modelo.
 * **`pests.model_label`** es la clase exacta que devuelve el modelo. Tiene que coincidir con la lista de clases del entrenamiento (`ml/`); si se agregan o renombran clases, hay que actualizar el catálogo.
 * **`crop_types.code`** (`maize`, `coffee`, `beans`) es la clave estable que usan los demás módulos en vez del `id` numérico.
+* **`password_reset_codes` guarda solo hashes:** el código se guarda como HMAC-SHA256 y el token de recuperación como SHA-256, nunca en claro. El código dura 10 minutos y admite 5 intentos; el token es de un solo uso (10 minutos). Se permiten 3 solicitudes cada 15 minutos y al cambiar la contraseña se revocan todas las sesiones.
 
 ## 10. Pendientes y decisiones abiertas
 
-- [ ] **Modelos SQLAlchemy:** `models.py` de cada módulo está vacío; hay que implementar las tablas de este documento y generar la migración inicial con `./scripts/migrate.sh -m "esquema inicial"`.
+- [ ] **Modelos SQLAlchemy:** `auth` ya tiene sus modelos y migraciones; faltan los de `crops`, `diagnosis` y `consultations`.
 - [ ] **Almacenamiento de imágenes:** las tablas guardan `image_path`, pero aún no hay dónde se guardan los archivos (volumen de Docker compartido, MinIO/S3, etc.). Hay que decidirlo y agregarlo al compose.
 - [ ] **Datos iniciales (seed):** `crop_types` debe venir con maíz, café y frijol; `pests`, `pest_crops` y `treatments` deben llenarse con las plagas del modelo y sus tratamientos, idealmente revisados por un agrónomo.
 - [ ] **Umbral de confianza:** definir el valor inicial (por defecto 0.70) y dónde se configura. Ya existe `CONFIDENCE_THRESHOLD` en `docker-compose.yml`.

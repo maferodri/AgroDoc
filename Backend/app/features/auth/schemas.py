@@ -1,6 +1,7 @@
 """Esquemas Pydantic del módulo auth — contrato HTTP de `docs/openapi.yaml`.
 
-Cubre el registro de usuarios (`POST /auth/register`):
+Cubre el registro de usuarios (`POST /auth/register`), el login y la
+recuperación de contraseña (`POST /auth/password-reset/*`):
 - RegisterRequest  → lo que ENVÍA el cliente.
 - AuthResponse     → lo que RECIBE el cliente (tokens + usuario).
 - User             → representación pública del usuario (sin password_hash).
@@ -83,9 +84,7 @@ class RegisterRequest(BaseModel):
     @field_validator("password")
     @classmethod
     def _check_password(cls, value: str) -> str:
-        if errors := validators.password_policy_errors(value):
-            raise ValueError("La contraseña debe incluir " + ", ".join(errors))
-        return value
+        return validators.validate_password_policy(value)
 
 
 class LoginRequest(BaseModel):
@@ -93,6 +92,48 @@ class LoginRequest(BaseModel):
 
     email: NormalizedEmail
     password: str = Field(min_length=1, max_length=128)
+
+
+class PasswordResetRequest(BaseModel):
+    """Body de `POST /auth/password-reset/request`."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    email: NormalizedEmail
+
+
+class PasswordResetVerifyRequest(BaseModel):
+    """Body de `POST /auth/password-reset/verify`."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    email: NormalizedEmail
+    code: str = Field(min_length=1, max_length=64)
+
+
+class PasswordResetConfirmRequest(BaseModel):
+    """Body de `POST /auth/password-reset/confirm`."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    reset_token: str = Field(min_length=1, max_length=512)
+    new_password: str = Field(min_length=8, max_length=128)
+
+    @field_validator("new_password")
+    @classmethod
+    def _check_password(cls, value: str) -> str:
+        return validators.validate_password_policy(value)
+
+
+class PasswordResetVerifyResponse(BaseModel):
+    """Token de un solo uso para completar el cambio de contraseña."""
+
+    reset_token: str
+    expires_in: int
+
+
+class MessageResponse(BaseModel):
+    message: str
 
 
 class AuthResponse(BaseModel):

@@ -30,7 +30,9 @@ paths:
       tags:
         - auth
       summary: Registrar nuevo usuario
-      description: Crea un nuevo usuario con rol agricultor o agrónomo.
+      description: >-
+        Crea un nuevo usuario con rol `farmer`. El rol no lo elige el cliente;
+        un administrador puede cambiarlo después con PATCH /users/{user_id}/role.
       operationId: registerUser
       requestBody:
         required: true
@@ -72,6 +74,91 @@ paths:
         '401':
           description: Credenciales inválidas.
 
+  /auth/password-reset/request:
+    post:
+      tags:
+        - auth
+      summary: Solicitar código de recuperación de contraseña
+      description: >-
+        Genera un código de 6 dígitos y lo envía por correo. La respuesta es
+        genérica para no revelar si el correo está registrado. Límite: 3
+        solicitudes cada 15 minutos por usuario.
+      operationId: requestPasswordReset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+      responses:
+        '200':
+          description: Mensaje genérico (exista o no la cuenta).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /auth/password-reset/verify:
+    post:
+      tags:
+        - auth
+      summary: Validar código de recuperación
+      description: >-
+        Valida el código y emite un `reset_token` de un solo uso (10 minutos).
+        Máximo 5 intentos por código.
+      operationId: verifyPasswordResetCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetVerifyRequest'
+      responses:
+        '200':
+          description: Código válido; token para completar el cambio.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordResetVerifyResponse'
+        '400':
+          description: Código inválido, expirado o sin intentos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainErrorResponse'
+
+  /auth/password-reset/confirm:
+    post:
+      tags:
+        - auth
+      summary: Definir nueva contraseña
+      description: >-
+        Cambia la contraseña usando el `reset_token` y revoca todas las sesiones
+        activas del usuario.
+      operationId: confirmPasswordReset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirmRequest'
+      responses:
+        '200':
+          description: Contraseña actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Token inválido/expirado o contraseña fuera de la política.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainErrorResponse'
+
+  # Pendientes de implementación: /auth/refresh, /auth/logout y /agronomists.
   /auth/refresh:
     post:
       tags:
@@ -139,6 +226,43 @@ paths:
                 $ref: '#/components/schemas/User'
         '401':
           $ref: '#/components/responses/Unauthorized'
+
+  /users/{user_id}/role:
+    patch:
+      tags:
+        - auth
+      summary: Cambiar rol de un usuario (solo administradores)
+      security:
+        - BearerAuth: []
+      operationId: updateUserRole
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRoleRequest'
+      responses:
+        '200':
+          description: Usuario con el rol actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /agronomists:
     get:
@@ -722,10 +846,16 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: El usuario autenticado no tiene permisos para la acción.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DomainErrorResponse'
 
   schemas:
 
-    ErrorResponse:
+    ValidationErrorResponse:
       type: object
       required:
         - error
@@ -733,10 +863,38 @@ components:
       properties:
         error:
           type: string
-          example: BAD_REQUEST
+          enum: [validation_error]
         message:
           type: string
-          example: El campo 'crop_id' es obligatorio.
+          example: La contraseña debe incluir al menos una letra mayúscula
+        field:
+          type: string
+          nullable: true
+          example: password
+
+    DomainErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              example: conflict
+            message:
+              type: string
+              example: El correo ya está registrado.
+
+    ErrorResponse:
+      description: Error de validación (400) o error de dominio.
+      oneOf:
+        - $ref: '#/components/schemas/ValidationErrorResponse'
+        - $ref: '#/components/schemas/DomainErrorResponse'
 
     # --- AUTH SCHEMAS ---
 
@@ -785,6 +943,7 @@ components:
 
     RegisterRequest:
       type: object
+      additionalProperties: false
       required:
         - email
         - password
@@ -796,11 +955,15 @@ components:
         password:
           type: string
           minLength: 8
+          maxLength: 128
         full_name:
           type: string
+          minLength: 1
+          maxLength: 255
 
     LoginRequest:
       type: object
+      additionalProperties: false
       required:
         - email
         - password
@@ -810,6 +973,80 @@ components:
           format: email
         password:
           type: string
+          minLength: 1
+          maxLength: 128
+
+    MessageResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+
+    PasswordResetRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+
+    PasswordResetVerifyRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - email
+        - code
+      properties:
+        email:
+          type: string
+          format: email
+        code:
+          type: string
+          minLength: 1
+          maxLength: 64
+
+    PasswordResetConfirmRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - reset_token
+        - new_password
+      properties:
+        reset_token:
+          type: string
+          minLength: 1
+          maxLength: 512
+        new_password:
+          type: string
+          minLength: 8
+          maxLength: 128
+
+    PasswordResetVerifyResponse:
+      type: object
+      required:
+        - reset_token
+        - expires_in
+      properties:
+        reset_token:
+          type: string
+        expires_in:
+          type: integer
+          description: Segundos de vigencia del token.
+          example: 600
+
+    UpdateUserRoleRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - role
+      properties:
+        role:
+          type: string
+          enum: [agronomist, admin]
 
     AuthResponse:
       type: object

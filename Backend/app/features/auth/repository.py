@@ -12,12 +12,12 @@ Contrato con el `service`:
 import uuid
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import ConflictError
-from app.features.auth.models import RefreshToken, User
+from app.features.auth.models import PasswordResetCode, RefreshToken, User
 
 # Nombre real de la restricción UNIQUE en Postgres (naming_convention de la Base).
 _EMAIL_UNIQUE_CONSTRAINT = "uq_users_email"
@@ -107,3 +107,158 @@ def add_refresh_token(
     db.add(token)
     db.flush()
     return token
+
+
+def create_password_reset_code(
+    db: Session,
+    *,
+    user_id: uuid.UUID,
+    code_hash: str,
+    expires_at: datetime,
+) -> PasswordResetCode:
+    """Registra un código de recuperación. Hace `flush`, no `commit`."""
+    code = PasswordResetCode(
+        user_id=user_id,
+        code_hash=code_hash,
+        expires_at=expires_at,
+    )
+    db.add(code)
+    db.flush()
+    return code
+
+
+def count_password_reset_codes_since(
+    db: Session,
+    *,
+    user_id: uuid.UUID,
+    since: datetime,
+) -> int:
+    """Solicitudes de recuperación del usuario desde `since` (rate limit)."""
+    return (
+        db.scalar(
+            select(func.count())
+            .select_from(PasswordResetCode)
+            .where(
+                PasswordResetCode.user_id == user_id,
+                PasswordResetCode.created_at >= since,
+            )
+        )
+        or 0
+    )
+
+
+def invalidate_pending_password_reset_codes(
+    db: Session,
+    *,
+    user_id: uuid.UUID,
+    now: datetime,
+) -> None:
+    """Marca como usados los códigos pendientes anteriores del usuario."""
+    db.execute(
+        update(PasswordResetCode)
+        .where(
+            PasswordResetCode.user_id == user_id,
+            PasswordResetCode.used_at.is_(None),
+        )
+        .values(used_at=now)
+    )
+    db.flush()
+
+
+def get_latest_password_reset_code(
+    db: Session,
+    *,
+    user_id: uuid.UUID,
+) -> PasswordResetCode | None:
+    """Código más reciente del usuario. `None` si nunca pidió uno."""
+    return db.scalar(
+        select(PasswordResetCode)
+        .where(PasswordResetCode.user_id == user_id)
+        .order_by(PasswordResetCode.created_at.desc())
+        .limit(1)
+    )
+
+
+def get_password_reset_code_by_reset_token_hash(
+    db: Session,
+    *,
+    reset_token_hash: str,
+) -> PasswordResetCode | None:
+    """Código asociado al hash del reset_token. `None` si no existe."""
+    return db.scalar(
+        select(PasswordResetCode).where(
+            PasswordResetCode.reset_token_hash == reset_token_hash
+        )
+    )
+
+
+def increment_password_reset_attempts(
+    db: Session,
+    *,
+    code: PasswordResetCode,
+    invalidated_at: datetime | None = None,
+) -> PasswordResetCode:
+    """Suma un intento fallido; opcionalmente invalida el código."""
+    code.attempts += 1
+    if invalidated_at is not None:
+        code.used_at = invalidated_at
+    db.flush()
+    return code
+
+
+def mark_password_reset_code_verified(
+    db: Session,
+    *,
+    code: PasswordResetCode,
+    reset_token_hash: str,
+    reset_token_expires_at: datetime,
+    verified_at: datetime,
+) -> PasswordResetCode:
+    """Guarda el hash del reset_token y la marca de verificación."""
+    code.reset_token_hash = reset_token_hash
+    code.reset_token_expires_at = reset_token_expires_at
+    code.verified_at = verified_at
+    db.flush()
+    return code
+
+
+def mark_password_reset_code_used(
+    db: Session,
+    *,
+    code: PasswordResetCode,
+    used_at: datetime,
+) -> PasswordResetCode:
+    """Consume el código y su reset_token."""
+    code.used_at = used_at
+    db.flush()
+    return code
+
+
+def update_user_password(
+    db: Session,
+    *,
+    user: User,
+    password_hash: str,
+) -> User:
+    """Reemplaza el hash de contraseña del usuario."""
+    user.password_hash = password_hash
+    db.flush()
+    return user
+
+
+def revoke_all_refresh_tokens(
+    db: Session,
+    *,
+    user_id: uuid.UUID,
+    revoked_at: datetime,
+) -> None:
+    """Revoca todas las sesiones activas del usuario."""
+    db.execute(
+        update(RefreshToken)
+        .where(
+            RefreshToken.user_id == user_id,
+            RefreshToken.revoked_at.is_(None),
+        )
+        .values(revoked_at=revoked_at)
+    )
+    db.flush()

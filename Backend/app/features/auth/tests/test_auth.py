@@ -36,12 +36,11 @@ from app.features.auth.schemas import (
     User,
 )
 
-# Rutas actuales de `router.py`. El contrato de `docs/openapi.yaml` propone
-# `/auth/register`, `/auth/login` y `/users/me`; si se alinean, se cambian aquí.
+# Rutas definidas en `docs/openapi.yaml`.
 API = "/api/v1"
-REGISTER_URL = f"{API}/register"
-LOGIN_URL = f"{API}/login"
-ME_URL = f"{API}/me"
+REGISTER_URL = f"{API}/auth/register"
+LOGIN_URL = f"{API}/auth/login"
+ME_URL = f"{API}/users/me"
 ROLE_URL = f"{API}/users/{{user_id}}/role"
 
 REGISTER_BODY = {
