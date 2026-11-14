@@ -35,15 +35,30 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
 
+  # web:
+  #   build:
+  #     context: ../Frontend
+  #     dockerfile: apps/web/Dockerfile
+  #     args:
+  #       VITE_API_URL: http://localhost:8000/api/v1
+  #   restart: unless-stopped
+  #   networks: [agrodoc]
+  #   ports: ["3000:80"]
+  #   depends_on: [api]
+
   web:
-    build: 
+    build:
       context: ../Frontend
-      dockerfile: apps/web/Dockerfile
-      args:
-        VITE_API_URL: http://localhost:8000/api/v1
+      dockerfile: apps/web/Dockerfile.dev
     restart: unless-stopped
     networks: [agrodoc]
-    ports: ["3000:80"]
+    ports: ["3000:5173"]
+    environment:
+      VITE_API_URL: http://localhost:8000/api/v1
+    volumes:
+      - ../Frontend:/app:z
+      - /app/node_modules
+      - /app/apps/web/node_modules
     depends_on: [api]
 
 networks:

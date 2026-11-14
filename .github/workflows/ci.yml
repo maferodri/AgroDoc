@@ -1,4 +1,3 @@
-
 name: Project CI Pipeline
 
 on:
@@ -65,3 +64,39 @@ jobs:
       - name: Ejecutar Pruebas (Pytest)
         working-directory: Backend
         run: pytest -q
+
+  frontend-ci:
+    name: Frontend Monorepo (Lint, Build & Test)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: Frontend
+
+    steps:
+      - name: Checkout de código
+        uses: actions/checkout@v4
+
+      - name: Configurar pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+          cache-dependency-path: Frontend/pnpm-lock.yaml
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Ejecutar Linter
+        run: pnpm turbo lint --filter=@agrodoc/web
+
+      - name: Ejecutar Pruebas
+        run: pnpm turbo test --filter=@agrodoc/web -- --run
+
+      - name: Verificar Build de Producción
+        env:
+          VITE_API_URL: http://localhost:8000/api/v1
+        run: pnpm turbo build --filter=@agrodoc/web
