@@ -25,7 +25,7 @@ from . import validators
 # Restringe un String a un conjunto fijo de valores
 UserRole = Literal["farmer", "agronomist", "admin"]
 
-#Roles que un administrador puede asignar al editar una cuenta
+# Roles que un administrador puede asignar al editar una cuenta
 AssignableRole = Literal["agronomist", "admin"]
 
 # Tipos reutilizables
@@ -63,8 +63,9 @@ class AgronomistUser(User):
         validation_alias="agronomist_profile",
     )
 
+
 class UpdateUserRoleRequest(BaseModel):
-    """ Body de PATCH para admins"""
+    """Body de PATCH para admins"""
 
     model_config = ConfigDict(extra="forbid")
     role: AssignableRole

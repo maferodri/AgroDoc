@@ -60,7 +60,5 @@ def update_user_role(
     actor: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ) -> UserSchema:
-    updated = service.update_user_role(
-        db, actor=actor, target_id=user_id, new_role=payload.role
-    )
+    updated = service.update_user_role(db, actor=actor, target_id=user_id, new_role=payload.role)
     return UserSchema.model_validate(updated)

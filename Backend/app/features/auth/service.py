@@ -107,6 +107,7 @@ def login(db: Session, payload: LoginRequest) -> AuthResponse:
     db.commit()
     return response
 
+
 def update_user_role(
     db: Session,
     *,

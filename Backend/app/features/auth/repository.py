@@ -79,7 +79,8 @@ def create_user(
         raise _translate_integrity_error(exc) from exc
     return user
 
-def update_user_role(db: Session, *, user:User, role: str) -> User:
+
+def update_user_role(db: Session, *, user: User, role: str) -> User:
     """Asigna un nuevo rol al usuario."""
     user.role = role
     db.flush()

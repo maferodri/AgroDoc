@@ -703,9 +703,7 @@ def test_update_user_role_changes_target_role_and_commits(
 
     monkeypatch.setattr(repository, "update_user_role", _update)
 
-    service.update_user_role(
-        fake_db, actor=admin, target_id=farmer.id, new_role=new_role
-    )
+    service.update_user_role(fake_db, actor=admin, target_id=farmer.id, new_role=new_role)
 
     assert updated_calls == {"user": farmer, "role": new_role}
     assert fake_db.commits == 1
@@ -723,17 +721,13 @@ def test_update_user_role_rejects_non_admin(monkeypatch, fake_db, make_user) -> 
     monkeypatch.setattr(repository, "update_user_role", _update)
 
     with pytest.raises(ForbiddenError, match="permisos"):
-        service.update_user_role(
-            fake_db, actor=farmer, target_id=target.id, new_role="admin"
-        )
+        service.update_user_role(fake_db, actor=farmer, target_id=target.id, new_role="admin")
 
     assert called == []
     assert fake_db.commits == 0
 
 
-def test_update_user_role_missing_target_raises_not_found(
-    monkeypatch, fake_db, make_user
-) -> None:
+def test_update_user_role_missing_target_raises_not_found(monkeypatch, fake_db, make_user) -> None:
     admin = make_user(email="admin@example.com", role="admin")
 
     monkeypatch.setattr(repository, "get_user_by_id", lambda db, user_id: None)
@@ -746,9 +740,7 @@ def test_update_user_role_missing_target_raises_not_found(
     assert fake_db.commits == 0
 
 
-def test_update_user_role_endpoint_returns_updated_user(
-    client, make_user, monkeypatch
-) -> None:
+def test_update_user_role_endpoint_returns_updated_user(client, make_user, monkeypatch) -> None:
     admin = make_user(email="admin@example.com", role="admin")
     farmer = make_user(email="pepe@example.com", role="farmer")
 
@@ -777,9 +769,7 @@ def test_update_user_role_endpoint_returns_updated_user(
     assert "password_hash" not in body
 
 
-def test_update_user_role_endpoint_rejects_invalid_role(
-    client, make_user, monkeypatch
-) -> None:
+def test_update_user_role_endpoint_rejects_invalid_role(client, make_user, monkeypatch) -> None:
     admin = make_user(email="admin@example.com", role="admin")
 
     def _get_user_by_id(db, user_id):
@@ -799,9 +789,7 @@ def test_update_user_role_endpoint_rejects_invalid_role(
     assert response.json()["error"] == "validation_error"
 
 
-def test_update_user_role_endpoint_forbids_non_admin(
-    client, make_user, monkeypatch
-) -> None:
+def test_update_user_role_endpoint_forbids_non_admin(client, make_user, monkeypatch) -> None:
     farmer = make_user(email="pepe@example.com", role="farmer")
     target = make_user(email="otro@example.com", role="farmer")
 
@@ -820,9 +808,7 @@ def test_update_user_role_endpoint_forbids_non_admin(
     assert response.status_code == 403
 
 
-def test_update_user_role_endpoint_requires_auth(
-    client, make_user, monkeypatch
-) -> None:
+def test_update_user_role_endpoint_requires_auth(client, make_user, monkeypatch) -> None:
     target = make_user(email="pepe@example.com", role="farmer")
     monkeypatch.setattr(repository, "get_user_by_id", lambda db, user_id: target)
 
