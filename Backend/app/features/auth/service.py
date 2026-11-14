@@ -12,12 +12,18 @@ filas o no entra ninguna.
 
 import hashlib
 import secrets
+import uuid
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.exceptions import ConflictError, ForbiddenError, UnauthorizedError
+from app.core.exceptions import (
+    ConflictError,
+    ForbiddenError,
+    NotFoundError,
+    UnauthorizedError,
+)
 from app.core.security import create_access_token, hash_password, verify_password
 from app.features.auth import repository
 from app.features.auth.models import User
@@ -100,3 +106,23 @@ def login(db: Session, payload: LoginRequest) -> AuthResponse:
     response = _issue_tokens(db, user)
     db.commit()
     return response
+
+
+def update_user_role(
+    db: Session,
+    *,
+    actor: User,
+    target_id: uuid.UUID,
+    new_role: str,
+) -> User:
+    if actor.role != "admin":
+        raise ForbiddenError("No tienes permisos para realizar esta acción")
+
+    target = repository.get_user_by_id(db, target_id)
+
+    if target is None:
+        raise NotFoundError("Usuario no encontrado")
+
+    updated = repository.update_user_role(db, user=target, role=new_role)
+    db.commit()
+    return updated

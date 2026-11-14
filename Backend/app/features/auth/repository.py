@@ -80,6 +80,13 @@ def create_user(
     return user
 
 
+def update_user_role(db: Session, *, user: User, role: str) -> User:
+    """Asigna un nuevo rol al usuario."""
+    user.role = role
+    db.flush()
+    return user
+
+
 def add_refresh_token(
     db: Session,
     *,
