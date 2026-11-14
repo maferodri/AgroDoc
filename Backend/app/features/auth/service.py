@@ -61,6 +61,7 @@ class PasswordResetEmail:
     to: str
     code: str
 
+
 _DUMMY_PASSWORD_HASH = hash_password("dummy-password-for-timing-only")
 
 

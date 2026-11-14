@@ -73,8 +73,7 @@ class Settings(BaseSettings):
         ]
         if missing:
             raise ValueError(
-                "Faltan variables de entorno para enviar correo con Brevo: "
-                + ", ".join(missing)
+                "Faltan variables de entorno para enviar correo con Brevo: " + ", ".join(missing)
             )
         return self
 

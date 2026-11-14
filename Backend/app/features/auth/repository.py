@@ -186,9 +186,7 @@ def get_password_reset_code_by_reset_token_hash(
 ) -> PasswordResetCode | None:
     """Código asociado al hash del reset_token. `None` si no existe."""
     return db.scalar(
-        select(PasswordResetCode).where(
-            PasswordResetCode.reset_token_hash == reset_token_hash
-        )
+        select(PasswordResetCode).where(PasswordResetCode.reset_token_hash == reset_token_hash)
     )
 
 

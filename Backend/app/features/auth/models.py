@@ -79,6 +79,7 @@ class User(Base):
         passive_deletes=True,
     )
 
+
 class AgronomistProfile(Base):
     """Perfil extendido para usuarios con rol `agronomist` (1:0..1 con users)."""
 
@@ -123,6 +124,7 @@ class RefreshToken(Base):
 
     user: Mapped["User"] = relationship(back_populates="refresh_tokens")
 
+
 class PasswordResetCode(Base):
     """Código de recuperación de contraseña (de un solo uso).
 
@@ -133,9 +135,7 @@ class PasswordResetCode(Base):
     """
 
     __tablename__ = "password_reset_codes"
-    __table_args__ = (
-        Index("ix_password_reset_codes_user_id_created_at", "user_id", "created_at"),
-    )
+    __table_args__ = (Index("ix_password_reset_codes_user_id_created_at", "user_id", "created_at"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

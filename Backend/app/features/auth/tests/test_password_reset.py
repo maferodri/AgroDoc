@@ -83,9 +83,7 @@ def reset_store(monkeypatch, make_user):
 
     def count_password_reset_codes_since(db, *, user_id, since):
         return sum(
-            1
-            for code in state.codes
-            if code.user_id == user_id and code.created_at >= since
+            1 for code in state.codes if code.user_id == user_id and code.created_at >= since
         )
 
     def invalidate_pending_password_reset_codes(db, *, user_id, now):
@@ -141,9 +139,7 @@ def reset_store(monkeypatch, make_user):
 
     monkeypatch.setattr(repository, "get_user_by_email", get_user_by_email)
     monkeypatch.setattr(repository, "get_user_by_id", get_user_by_id)
-    monkeypatch.setattr(
-        repository, "create_password_reset_code", create_password_reset_code
-    )
+    monkeypatch.setattr(repository, "create_password_reset_code", create_password_reset_code)
     monkeypatch.setattr(
         repository,
         "count_password_reset_codes_since",
@@ -180,9 +176,7 @@ def reset_store(monkeypatch, make_user):
         mark_password_reset_code_used,
     )
     monkeypatch.setattr(repository, "update_user_password", update_user_password)
-    monkeypatch.setattr(
-        repository, "revoke_all_refresh_tokens", revoke_all_refresh_tokens
-    )
+    monkeypatch.setattr(repository, "revoke_all_refresh_tokens", revoke_all_refresh_tokens)
     monkeypatch.setattr(repository, "add_refresh_token", add_refresh_token)
 
     return state
@@ -285,9 +279,7 @@ def test_request_rate_limit_is_three_per_window(client, email_sender, reset_stor
 # ---------------------------------------------------------------------------
 
 
-def test_verify_correct_code_returns_a_hashed_single_use_token(
-    client, email_sender, reset_store
-):
+def test_verify_correct_code_returns_a_hashed_single_use_token(client, email_sender, reset_store):
     _, code = _request_code(client, email_sender, reset_store.user.email)
 
     response = _verify(client, reset_store.user.email, code)
@@ -322,9 +314,7 @@ def test_verify_wrong_code_increments_attempts(client, email_sender, reset_store
     assert reset_store.codes[-1].used_at is None
 
 
-def test_verify_malformed_code_uses_the_generic_error(
-    client, email_sender, reset_store
-):
+def test_verify_malformed_code_uses_the_generic_error(client, email_sender, reset_store):
     _request_code(client, email_sender, reset_store.user.email)
 
     response = _verify(client, reset_store.user.email, "no-es-un-codigo")
@@ -334,9 +324,7 @@ def test_verify_malformed_code_uses_the_generic_error(
     assert reset_store.codes[-1].attempts == 1
 
 
-def test_verify_exhausted_attempts_invalidates_the_code(
-    client, email_sender, reset_store
-):
+def test_verify_exhausted_attempts_invalidates_the_code(client, email_sender, reset_store):
     _, code = _request_code(client, email_sender, reset_store.user.email)
     wrong = _wrong_code(code)
 
@@ -366,9 +354,7 @@ def test_verify_expired_code_is_rejected(client, email_sender, reset_store):
 # ---------------------------------------------------------------------------
 
 
-def test_confirm_changes_password_and_revokes_sessions(
-    client, email_sender, reset_store
-):
+def test_confirm_changes_password_and_revokes_sessions(client, email_sender, reset_store):
     _, code = _request_code(client, email_sender, reset_store.user.email)
     token = _verify_ok(client, reset_store.user.email, code)
     old_hash = reset_store.user.password_hash
@@ -382,9 +368,7 @@ def test_confirm_changes_password_and_revokes_sessions(
     assert reset_store.revoked_user_ids == [reset_store.user.id]
 
 
-def test_login_after_confirm_uses_the_new_password(
-    client, email_sender, reset_store
-):
+def test_login_after_confirm_uses_the_new_password(client, email_sender, reset_store):
     _, code = _request_code(client, email_sender, reset_store.user.email)
     token = _verify_ok(client, reset_store.user.email, code)
     assert _confirm(client, token).status_code == 200
@@ -412,9 +396,7 @@ def test_confirm_rejects_unknown_token(client, reset_store):
 def test_confirm_rejects_expired_token(client, email_sender, reset_store):
     _, code = _request_code(client, email_sender, reset_store.user.email)
     token = _verify_ok(client, reset_store.user.email, code)
-    reset_store.codes[-1].reset_token_expires_at = datetime.now(UTC) - timedelta(
-        seconds=1
-    )
+    reset_store.codes[-1].reset_token_expires_at = datetime.now(UTC) - timedelta(seconds=1)
 
     response = _confirm(client, token)
 
@@ -433,9 +415,7 @@ def test_confirm_rejects_reused_token(client, email_sender, reset_store):
     assert _error_code(reused) == "invalid_reset_token"
 
 
-def test_confirm_reuses_the_registration_password_policy(
-    client, email_sender, reset_store
-):
+def test_confirm_reuses_the_registration_password_policy(client, email_sender, reset_store):
     _, code = _request_code(client, email_sender, reset_store.user.email)
     token = _verify_ok(client, reset_store.user.email, code)
 
