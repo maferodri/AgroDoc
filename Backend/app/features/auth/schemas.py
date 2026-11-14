@@ -25,6 +25,9 @@ from . import validators
 # Restringe un String a un conjunto fijo de valores
 UserRole = Literal["farmer", "agronomist", "admin"]
 
+#Roles que un administrador puede asignar al editar una cuenta
+AssignableRole = Literal["agronomist", "admin"]
+
 # Tipos reutilizables
 NormalizedEmail = Annotated[EmailStr, BeforeValidator(validators.normalize_email)]
 TrimmedStr = Annotated[str, BeforeValidator(validators.strip_text)]
@@ -59,6 +62,12 @@ class AgronomistUser(User):
         default=None,
         validation_alias="agronomist_profile",
     )
+
+class UpdateUserRoleRequest(BaseModel):
+    """ Body de PATCH para admins"""
+
+    model_config = ConfigDict(extra="forbid")
+    role: AssignableRole
 
 
 class RegisterRequest(BaseModel):

@@ -4,14 +4,21 @@ Contrato: `docs/openapi.yaml` (`/auth/*`, `/users/*`, `/agronomists`).
 Este archivo solo traduce HTTP ↔ casos de uso; la lógica vive en `service.py`.
 """
 
+import uuid
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.features.auth import service
-from app.features.auth.dependency import get_current_user
+from app.features.auth.dependency import get_current_user, require_admin
 from app.features.auth.models import User
-from app.features.auth.schemas import AuthResponse, LoginRequest, RegisterRequest
+from app.features.auth.schemas import (
+    AuthResponse,
+    LoginRequest,
+    RegisterRequest,
+    UpdateUserRoleRequest,
+)
 from app.features.auth.schemas import User as UserSchema
 from app.shared.schemas import ModuleHealth
 
@@ -42,6 +49,18 @@ def me(current_user: User = Depends(get_current_user)) -> UserSchema:
     return UserSchema.model_validate(current_user)
 
 
-# Próximos endpoints del slice (ver contrato):
-#   POST /auth/register, POST /auth/login, POST /auth/refresh, POST /auth/logout
-#   GET  /users/me, GET /agronomists
+@router.patch(
+    "/users/{user_id}/role",
+    response_model=UserSchema,
+    summary="Cambiar rol de un usuario (solo administradores)",
+)
+def update_user_role(
+    user_id: uuid.UUID,
+    payload: UpdateUserRoleRequest,
+    actor: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> UserSchema:
+    updated = service.update_user_role(
+        db, actor=actor, target_id=user_id, new_role=payload.role
+    )
+    return UserSchema.model_validate(updated)

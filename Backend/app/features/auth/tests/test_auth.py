@@ -12,6 +12,7 @@ Contrato vigente del registro: `email`, `password` y `full_name`.
 """
 
 import hashlib
+import uuid
 from datetime import UTC, datetime, timedelta
 
 import jwt
@@ -19,7 +20,7 @@ import pytest
 from pydantic import ValidationError
 
 from app.core.config import settings
-from app.core.exceptions import ConflictError, ForbiddenError, UnauthorizedError
+from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError, UnauthorizedError
 from app.core.security import (
     create_access_token,
     decode_token,
@@ -41,6 +42,7 @@ API = "/api/v1"
 REGISTER_URL = f"{API}/register"
 LOGIN_URL = f"{API}/login"
 ME_URL = f"{API}/me"
+ROLE_URL = f"{API}/users/{{user_id}}/role"
 
 REGISTER_BODY = {
     "email": "farmer@example.com",
@@ -675,3 +677,155 @@ def test_require_roles_rejects_other_role(make_user) -> None:
 
     with pytest.raises(ForbiddenError, match="permisos"):
         require_roles("admin")(current_user=farmer)
+
+
+# ---------------------------------------------------------------------------
+# Cambio de rol de usuario (solo administradores)
+# ---------------------------------------------------------------------------
+
+
+def _role_url(user_id: uuid.UUID) -> str:
+    return ROLE_URL.format(user_id=user_id)
+
+
+@pytest.mark.parametrize("new_role", ["agronomist", "admin"])
+def test_update_user_role_changes_target_role_and_commits(
+    monkeypatch, fake_db, make_user, new_role
+) -> None:
+    admin = make_user(email="admin@example.com", role="admin")
+    farmer = make_user(email="pepe@example.com", role="farmer")
+
+    monkeypatch.setattr(repository, "get_user_by_id", lambda db, user_id: farmer)
+    updated_calls: dict = {}
+
+    def _update(db, **kwargs):
+        updated_calls.update(kwargs)
+
+    monkeypatch.setattr(repository, "update_user_role", _update)
+
+    service.update_user_role(
+        fake_db, actor=admin, target_id=farmer.id, new_role=new_role
+    )
+
+    assert updated_calls == {"user": farmer, "role": new_role}
+    assert fake_db.commits == 1
+
+
+def test_update_user_role_rejects_non_admin(monkeypatch, fake_db, make_user) -> None:
+    farmer = make_user(email="pepe@example.com", role="farmer")
+    target = make_user(email="otro@example.com", role="farmer")
+
+    called: list = []
+
+    def _update(db, **kwargs):
+        called.append(kwargs)
+
+    monkeypatch.setattr(repository, "update_user_role", _update)
+
+    with pytest.raises(ForbiddenError, match="permisos"):
+        service.update_user_role(
+            fake_db, actor=farmer, target_id=target.id, new_role="admin"
+        )
+
+    assert called == []
+    assert fake_db.commits == 0
+
+
+def test_update_user_role_missing_target_raises_not_found(
+    monkeypatch, fake_db, make_user
+) -> None:
+    admin = make_user(email="admin@example.com", role="admin")
+
+    monkeypatch.setattr(repository, "get_user_by_id", lambda db, user_id: None)
+
+    with pytest.raises(NotFoundError, match="no encontrado"):
+        service.update_user_role(
+            fake_db, actor=admin, target_id=uuid.uuid4(), new_role="agronomist"
+        )
+
+    assert fake_db.commits == 0
+
+
+def test_update_user_role_endpoint_returns_updated_user(
+    client, make_user, monkeypatch
+) -> None:
+    admin = make_user(email="admin@example.com", role="admin")
+    farmer = make_user(email="pepe@example.com", role="farmer")
+
+    def _get_user_by_id(db, user_id):
+        return admin if user_id == admin.id else farmer
+
+    monkeypatch.setattr(repository, "get_user_by_id", _get_user_by_id)
+
+    def _update(db, *, user, role):
+        user.role = role
+        return user
+
+    monkeypatch.setattr(repository, "update_user_role", _update)
+
+    token = create_access_token(str(admin.id), role="admin")
+    response = client.patch(
+        _role_url(farmer.id),
+        json={"role": "agronomist"},
+        headers=_bearer(token),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["role"] == "agronomist"
+    assert body["id"] == str(farmer.id)
+    assert "password_hash" not in body
+
+
+def test_update_user_role_endpoint_rejects_invalid_role(
+    client, make_user, monkeypatch
+) -> None:
+    admin = make_user(email="admin@example.com", role="admin")
+
+    def _get_user_by_id(db, user_id):
+        return admin if user_id == admin.id else None
+
+    monkeypatch.setattr(repository, "get_user_by_id", _get_user_by_id)
+
+    token = create_access_token(str(admin.id), role="admin")
+    response = client.patch(
+        _role_url(uuid.uuid4()),
+        json={"role": "farmer"},
+        headers=_bearer(token),
+    )
+
+    # `core/exceptions.py` reescribe los errores de validación Pydantic a 400.
+    assert response.status_code == 400
+    assert response.json()["error"] == "validation_error"
+
+
+def test_update_user_role_endpoint_forbids_non_admin(
+    client, make_user, monkeypatch
+) -> None:
+    farmer = make_user(email="pepe@example.com", role="farmer")
+    target = make_user(email="otro@example.com", role="farmer")
+
+    def _get_user_by_id(db, user_id):
+        return farmer if user_id == farmer.id else target
+
+    monkeypatch.setattr(repository, "get_user_by_id", _get_user_by_id)
+
+    token = create_access_token(str(farmer.id), role="farmer")
+    response = client.patch(
+        _role_url(target.id),
+        json={"role": "admin"},
+        headers=_bearer(token),
+    )
+
+    assert response.status_code == 403
+
+
+def test_update_user_role_endpoint_requires_auth(
+    client, make_user, monkeypatch
+) -> None:
+    target = make_user(email="pepe@example.com", role="farmer")
+    monkeypatch.setattr(repository, "get_user_by_id", lambda db, user_id: target)
+
+    response = client.patch(_role_url(target.id), json={"role": "admin"})
+
+    assert response.status_code == 401

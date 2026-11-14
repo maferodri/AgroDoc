@@ -51,3 +51,11 @@ def require_roles(*roles: str):
         return current_user
 
     return dependency
+
+
+# Dependencia pre-construida para endpoints exclusivos del rol administrador.
+# Se instancia a nivel de módulo para no llamar `require_roles(...)` dentro de
+# un `Depends(...)` en la firma de un endpoint (antipattern de FastAPI).
+require_admin = require_roles("admin")
+
+require_admin = require_roles("admin")
