@@ -789,7 +789,6 @@ components:
         - email
         - password
         - full_name
-        - role
       properties:
         email:
           type: string
@@ -798,13 +797,6 @@ components:
           type: string
           minLength: 8
         full_name:
-          type: string
-        role:
-          type: string
-          enum: [farmer, agronomist]
-        specialty:
-          type: string
-        license_number:
           type: string
 
     LoginRequest:

@@ -1,0 +1,28 @@
+{
+    "typography": {
+        "fontFamily": {
+            "primary": { "value": "Inter" },
+            "mono": { "value": "Roboto Mono" }
+        },
+        "fontSize": {
+            "xs": { "value": "12" },
+            "sm": { "value": "14" },
+            "base": { "value": "16" },
+            "lg": { "value": "20" },
+            "xl": { "value": "24" },
+            "xxl": { "value": "28" },
+            "xxxl": { "value": "36" },
+            "xxxxl": { "value": "48" }
+        },
+        "fontWeight": {
+            "regular": { "value": "400" },
+            "medium": { "value": "500" },
+            "bold": { "value": "700" }
+        },
+        "lineHeight": {
+            "tight": { "value": "1.2" },
+            "normal": { "value": "1.5" },
+            "loose": { "value": "1.75" }
+        }
+    }
+}

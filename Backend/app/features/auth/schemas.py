@@ -8,14 +8,26 @@ Cubre el registro de usuarios (`POST /auth/register`):
 """
 
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    EmailStr,
+    Field,
+    field_validator,
+)
 
-#Restringe un String a un conjunto fijo de valores 
+from . import validators
+
+# Restringe un String a un conjunto fijo de valores
 UserRole = Literal["farmer", "agronomist", "admin"]
-RegisterableRole = Literal["farmer", "agronomist"]
+
+# Tipos reutilizables
+NormalizedEmail = Annotated[EmailStr, BeforeValidator(validators.normalize_email)]
+TrimmedStr = Annotated[str, BeforeValidator(validators.strip_text)]
 
 
 class User(BaseModel):
@@ -54,20 +66,23 @@ class RegisterRequest(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    email: EmailStr
+    email: NormalizedEmail
     password: str = Field(min_length=8, max_length=128)
-    full_name: str = Field(min_length=1, max_length=255)
-    role: RegisterableRole
-    specialty: str | None = Field(default=None, max_length=255)
-    license_number: str | None = Field(default=None, max_length=100)
+    full_name: TrimmedStr = Field(min_length=1, max_length=255)
 
-    @model_validator(mode="after")
-    def _check_agronomist_fields(self) -> "RegisterRequest":
-        if self.role != "agronomist" and (self.specialty or self.license_number):
-            raise ValueError(
-                "specialty y license_number solo aplican al rol 'agronomist'"
-            )
-        return self
+    @field_validator("password")
+    @classmethod
+    def _check_password(cls, value: str) -> str:
+        if errors := validators.password_policy_errors(value):
+            raise ValueError("La contraseña debe incluir " + ", ".join(errors))
+        return value
+
+
+class LoginRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    email: NormalizedEmail
+    password: str = Field(min_length=1, max_length=128)
 
 
 class AuthResponse(BaseModel):

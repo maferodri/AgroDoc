@@ -1,0 +1,53 @@
+{
+  "name": "@agrodoc/mobile",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "@agrodoc/api": "workspace:*",
+    "@agrodoc/features": "workspace:*",
+    "@agrodoc/tokens": "workspace:*",
+    "@agrodoc/ui": "workspace:*",
+    "@tanstack/react-query": "^5.104.1",
+    "expo": "^58.0.23",
+    "expo-constants": "~58.0.15",
+    "expo-status-bar": "~58.0.4",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-native": "0.88.1",
+    "react-native-svg": "15.16.0",
+    "react-native-web": "^0.21.4"
+  },
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "test": "jest --ci"
+  },
+  "jest": {
+    "preset": "jest-expo",
+    "setupFilesAfterEnv": [
+      "<rootDir>/jest.setup.js"
+    ],
+    "transformIgnorePatterns": [
+      "node_modules/(?!.*(react-native|expo|@agrodoc))"
+    ],
+    "moduleNameMapper": {
+      "^react$": "<rootDir>/node_modules/react",
+      "^react/(.*)$": "<rootDir>/node_modules/react/$1"
+    },
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/.expo/",
+      "/.maestro/"
+    ]
+  },
+  "devDependencies": {
+    "@babel/core": "^7.28.0",
+    "@testing-library/react-native": "^14.1.0",
+    "jest": "~30.5.2",
+    "jest-expo": "~58.0.14",
+    "react-test-renderer": "19.3.0"
+  },
+  "private": true
+}

@@ -19,6 +19,7 @@ router = APIRouter(tags=["diagnosis"])
 def module_health() -> ModuleHealth:
     return service.health()
 
+
 # Próximos endpoints del slice (ver contrato):
 #   POST /diagnoses, GET /diagnoses, GET /diagnoses/{id}
 #   GET /pests, GET /pests/{id}
