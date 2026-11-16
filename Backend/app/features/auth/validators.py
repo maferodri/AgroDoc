@@ -22,3 +22,10 @@ def strip_text(value: object) -> object:
 def password_policy_errors(password: str) -> list[str]:
     """Reglas incumplidas. Lista vacía = contraseña válida."""
     return [hint for pattern, hint in _PASSWORD_RULES if not re.search(pattern, password)]
+
+
+def validate_password_policy(password: str) -> str:
+    """Valida la contraseña y la devuelve; lanza `ValueError` si no cumple."""
+    if errors := password_policy_errors(password):
+        raise ValueError("La contraseña debe incluir " + ", ".join(errors))
+    return password
