@@ -617,7 +617,9 @@ paths:
         Endpoint directo de inferencia para el frontend. Recibe una imagen, la
         preprocesa con los metadatos embebidos en `ml/export/model.onnx`
         (input_size, mean, std, resize_mode) y devuelve la clase predicha, su
-        confianza y las mejores `top_k` predicciones.
+        confianza y las mejores `top_k` predicciones. La confianza principal
+        también se devuelve redondeada como porcentaje entero
+        (`confidence_percent`: `87` equivale a 87%).
 
         No guarda nada en la base de datos ni valida el cultivo: para el flujo
         completo con persistencia y escalado a consultas usa `POST /diagnoses`.
@@ -1263,6 +1265,7 @@ components:
       required:
         - label
         - confidence
+        - confidence_percent
         - top_k
         - model_version
       properties:
@@ -1272,6 +1275,12 @@ components:
         confidence:
           type: number
           example: 0.8734
+        confidence_percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Confianza redondeada a porcentaje entero (`87` equivale a 87%).
+          example: 87
         top_k:
           type: array
           items:
