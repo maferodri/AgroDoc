@@ -23,13 +23,25 @@ const reactNativeSvgSoundShim = fileURLToPath(
   new URL('./shims/react-native-svg-sound.js', import.meta.url),
 )
 
+// Intercepta la importación relativa dentro de react-native-svg en Vite 8 (Rolldown)
+const nativeSvgSoundPlugin = {
+  name: 'shim-native-svg-sound',
+  enforce: 'pre',
+  resolveId(source) {
+    if (/(?:^|\/)fabric\/NativeSvgSoundModule(?:\.js)?$/.test(source)) {
+      return reactNativeSvgSoundShim
+    }
+  },
+}
+
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [nativeSvgSoundPlugin, react()],
   // El optimizer de Vite 8 no usa `resolve.extensions`; hay que declararlas
   // en su propio resolver para que se elijan los archivos `.web.js`.
   optimizeDeps: {
     rolldownOptions: {
+      plugins: [nativeSvgSoundPlugin],
       resolve: {
         extensions: [
           '.web.jsx',
@@ -47,7 +59,7 @@ export default defineConfig({
   resolve: {
     alias: [
       {
-        find: /^(?:\.\.\/)+fabric\/NativeSvgSoundModule$/,
+        find: /(?:^|\/)fabric\/NativeSvgSoundModule(?:\.js)?$/,
         replacement: reactNativeSvgSoundShim,
       },
       {
