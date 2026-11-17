@@ -2,6 +2,7 @@
  * Documento: lobby del agricultor (móvil).
  * Flujo principal: captura de foto → previsualización → análisis con
  * confianza. Si la confianza es baja, ofrece consultar a un agrónomo.
+ * Incluye la barra inferior con únicamente la sección de inicio habilitada.
  */
 import { useState } from 'react';
 import { Image, ScrollView, View } from 'react-native';
@@ -11,6 +12,7 @@ import {
     useAnalyzeDiagnosis,
     useCreateConsultation,
 } from '@agrodoc/features';
+import { BottomNav } from '../../components/BottomNav';
 import { Button, Text, useTheme } from '@agrodoc/ui';
 
 // Imagen local de ejemplo: evita depender de la cámara en las pruebas E2E.
@@ -62,101 +64,110 @@ export default function FarmerLobbyScreen() {
     };
 
     return (
-        <ScrollView
-            testID="farmer-diagnosis"
-            style={{ flex: 1, backgroundColor: theme.colors.background }}
-            contentContainerStyle={{
-                padding: theme.spacing.lg,
-                gap: theme.spacing.lg,
-                alignItems: 'center',
-            }}
-        >
-            <View
-                style={{
-                    width: '100%',
-                    flexDirection: 'row',
+        <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+            <ScrollView
+                testID="farmer-diagnosis"
+                style={{ flex: 1 }}
+                contentContainerStyle={{
+                    padding: theme.spacing.lg,
+                    paddingBottom: theme.spacing.xxl,
+                    gap: theme.spacing.lg,
                     alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: theme.spacing.sm,
                 }}
             >
-                <Text variant="subtitle">Diagnóstico de cultivos</Text>
-                <LogoutButton />
-            </View>
-
-            {step === 'capture' ? (
                 <View
                     style={{
                         width: '100%',
+                        flexDirection: 'row',
                         alignItems: 'center',
-                        gap: theme.spacing.md,
+                        justifyContent: 'space-between',
+                        gap: theme.spacing.sm,
                     }}
                 >
-                    <Text variant="body" color="notselected" align="center">
-                        Toma una foto clara de las hojas afectadas para
-                        analizarla.
-                    </Text>
-                    <Button
-                        title="Tomar foto"
-                        onPress={startPreview}
-                        fullWidth
-                    />
+                    <Text variant="subtitle">Diagnóstico de cultivos</Text>
+                    <LogoutButton />
                 </View>
-            ) : null}
 
-            {step === 'preview' ? (
-                <View
-                    testID="photo-preview"
-                    style={{
-                        width: '100%',
-                        alignItems: 'center',
-                        gap: theme.spacing.md,
-                    }}
-                >
-                    <Image
-                        source={SAMPLE_PHOTO}
+                {step === 'capture' ? (
+                    <View
                         style={{
                             width: '100%',
-                            height: 260,
-                            borderRadius: theme.radius.card,
+                            alignItems: 'center',
+                            gap: theme.spacing.md,
                         }}
-                        resizeMode="cover"
-                        accessibilityLabel="Previsualización de la foto del cultivo"
-                    />
-                    <Button
-                        title="Analizar foto"
-                        onPress={runDiagnosis}
-                        loading={analyze.isPending}
-                        fullWidth
-                    />
-                    <Button
-                        title="Repetir foto"
-                        variant="ghost"
-                        onPress={startPreview}
-                        fullWidth
-                    />
-                    {analyze.isError ? (
-                        <Text color="danger" align="center">
-                            No se pudo analizar la foto. Intenta de nuevo.
+                    >
+                        <Text
+                            variant="body"
+                            color="notselected"
+                            align="center"
+                        >
+                            Toma una foto clara de las hojas afectadas para
+                            analizarla.
                         </Text>
-                    ) : null}
-                </View>
-            ) : null}
+                        <Button
+                            title="Tomar foto"
+                            onPress={startPreview}
+                            fullWidth
+                        />
+                    </View>
+                ) : null}
 
-            {step === 'result' && diagnosis ? (
-                <View style={{ width: '100%', gap: theme.spacing.md }}>
-                    <DiagnosisResult
-                        diagnosis={diagnosis}
-                        onRequestConsultation={requestConsultation}
-                        onRetry={reset}
-                    />
-                    {consultationMessage ? (
-                        <Text color="success" align="center">
-                            {consultationMessage}
-                        </Text>
-                    ) : null}
-                </View>
-            ) : null}
-        </ScrollView>
+                {step === 'preview' ? (
+                    <View
+                        testID="photo-preview"
+                        style={{
+                            width: '100%',
+                            alignItems: 'center',
+                            gap: theme.spacing.md,
+                        }}
+                    >
+                        <Image
+                            source={SAMPLE_PHOTO}
+                            style={{
+                                width: '100%',
+                                height: 260,
+                                borderRadius: theme.radius.card,
+                            }}
+                            resizeMode="cover"
+                            accessibilityLabel="Previsualización de la foto del cultivo"
+                        />
+                        <Button
+                            title="Analizar foto"
+                            onPress={runDiagnosis}
+                            loading={analyze.isPending}
+                            fullWidth
+                        />
+                        <Button
+                            title="Repetir foto"
+                            variant="ghost"
+                            onPress={startPreview}
+                            fullWidth
+                        />
+                        {analyze.isError ? (
+                            <Text color="danger" align="center">
+                                No se pudo analizar la foto. Intenta de nuevo.
+                            </Text>
+                        ) : null}
+                    </View>
+                ) : null}
+
+                {step === 'result' && diagnosis ? (
+                    <View style={{ width: '100%', gap: theme.spacing.md }}>
+                        <DiagnosisResult
+                            diagnosis={diagnosis}
+                            onRequestConsultation={requestConsultation}
+                            onRetry={reset}
+                        />
+                        {consultationMessage ? (
+                            <Text color="success" align="center">
+                                {consultationMessage}
+                            </Text>
+                        ) : null}
+                    </View>
+                ) : null}
+            </ScrollView>
+
+            <BottomNav activeKey="home" captureDisabled />
+        </View>
     );
 }

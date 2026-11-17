@@ -26,6 +26,8 @@ export { PasswordInput } from './src/molecules/PasswordInput/PasswordInput';
 export { CheckboxInput } from './src/molecules/CheckboxInput/CheckboxInput';
 export { OrDivider } from './src/molecules/OrDivider/OrDivider';
 export { StepIndicator } from './src/molecules/StepIndicator/StepIndicator';
+export { NavItem } from './src/molecules/NavItem/NavItem';
+export { NAV_ITEM_VARIANTS } from './src/molecules/NavItem/NavItem.styles';
 export { Alert } from './src/organisms/Alert/Alert';
 export { ALERT_VARIANTS } from './src/organisms/Alert/Alert.styles';
 export { ConfirmDialog } from './src/organisms/ConfirmDialog/ConfirmDialog';

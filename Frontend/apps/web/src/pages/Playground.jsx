@@ -1,7 +1,8 @@
 /**
  * Documento: Playground de componentes (solo desarrollo).
  * Catálogo por niveles (átomos, moléculas, organismos y feedback) para
- * revisar y probar los componentes de @agrodoc/ui.
+ * revisar los componentes de @agrodoc/ui y los exclusivos de la web.
+ * Los componentes exclusivos del móvil no se cargan aquí.
  */
 import { useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
@@ -22,6 +23,7 @@ import {
     ICON_NAMES,
     Input,
     LoginForm,
+    NavItem,
     OrDivider,
     PasswordInput,
     RegisterForm,
@@ -29,6 +31,7 @@ import {
     Text,
     useTheme,
 } from '@agrodoc/ui';
+import { SidebarNav } from '../components/SidebarNav';
 
 /** Cabecera grande que separa cada nivel de composición. */
 const LevelSection = ({ title, description, children }) => {
@@ -228,6 +231,85 @@ const TabBarDemo = () => {
                     </Pressable>
                 );
             })}
+        </View>
+    );
+};
+
+const NavItemDemo = () => {
+    const theme = useTheme();
+
+    const states = [
+        { label: 'Deseleccionado', props: {} },
+        { label: 'Seleccionado', props: { selected: true } },
+        { label: 'Deshabilitado', props: { disabled: true } },
+    ];
+
+    return (
+        <>
+            <SubTitle>Web</SubTitle>
+            <View
+                style={{
+                    gap: theme.spacing.xs,
+                    padding: theme.spacing.sm,
+                    backgroundColor: theme.colors.surface,
+                    borderRadius: theme.radius.card,
+                }}
+            >
+                {states.map((state) => (
+                    <NavItem
+                        key={state.label}
+                        icon="home"
+                        label={state.label}
+                        {...state.props}
+                    />
+                ))}
+            </View>
+
+            <SubTitle>Móvil</SubTitle>
+            <View
+                style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-around',
+                    padding: theme.spacing.sm,
+                    backgroundColor: theme.colors.surface,
+                    borderRadius: theme.radius.card,
+                }}
+            >
+                {states.map((state) => (
+                    <NavItem
+                        key={state.label}
+                        variant="mobile"
+                        icon="home"
+                        label={state.label}
+                        {...state.props}
+                    />
+                ))}
+            </View>
+        </>
+    );
+};
+
+const SidebarNavDemo = () => {
+    const theme = useTheme();
+    const [activeKey, setActiveKey] = useState('queries');
+
+    return (
+        <View
+            style={{
+                width: 420,
+                height: 720,
+                borderWidth: 1,
+                borderColor: theme.colors.background,
+                borderRadius: theme.radius.card,
+                overflow: 'hidden',
+            }}
+        >
+            <SidebarNav
+                activeKey={activeKey}
+                onSelect={setActiveKey}
+                onPremium={() => alert('Suscripción premium')}
+                onLogout={() => alert('Cerrar sesión')}
+            />
         </View>
     );
 };
@@ -1092,6 +1174,10 @@ export default function Playground() {
                     <CatalogItem name="ConfidenceBar">
                         <ConfidenceBarDemo />
                     </CatalogItem>
+
+                    <CatalogItem name="NavItem">
+                        <NavItemDemo />
+                    </CatalogItem>
                 </LevelSection>
 
                 <LevelSection
@@ -1106,8 +1192,13 @@ export default function Playground() {
                         <RegisterFormDemo />
                     </CatalogItem>
 
+                    <CatalogItem name="SidebarNav (web)">
+                        <SidebarNavDemo />
+                    </CatalogItem>
+
                     <ComingSoon>
-                        card de cultivo, header y navegación.
+                        card de cultivo y header. La barra inferior móvil vive
+                        en apps/mobile.
                     </ComingSoon>
                 </LevelSection>
 

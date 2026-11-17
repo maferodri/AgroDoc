@@ -27,6 +27,7 @@ el grafo al día. El grafo es la fuente de contexto; este archivo solo resume re
 
 - **JavaScript** (`.js` / `.jsx`). No TypeScript, no archivos `.ts` / `.tsx`.
 - **Componentes UI puros**: sin llamadas a API ni acceso a stores. Todo entra por props.
+- **Componentes exclusivos de una plataforma**: si un componente solo se renderiza en web o solo en móvil, vive en `apps/web/src/components/` o `apps/mobile/src/components/`. `packages/ui` es solo para lo compartido entre ambas apps. El usuario avisa cuando un componente nuevo es exclusivo; si no lo indica, se asume compartido.
 - **Comentarios en español**: todo documento/archivo, clase, función, método o bloque complejo debe explicar con comentarios qué hace y con qué finalidad.
 - **Estilos solo con tokens**: `useTheme()` + `StyleSheet`. Nada de colores/espaciados fijos.
 - Usar **tokens semánticos** (`colors.primary`), nunca primitivos (`color.green.500`).
@@ -35,7 +36,7 @@ el grafo al día. El grafo es la fuente de contexto; este archivo solo resume re
 - Cada componente en su carpeta: `Componente.jsx`, `Componente.styles.js`, `index.js`.
 - Variantes por props (`variant`, `size`, `status`), no duplicar componentes.
 - Código específico de plataforma: `Componente.web.jsx` / `Componente.native.jsx`.
-- **Playground como catálogo**: todo componente visual nuevo debe agregarse a `apps/web/src/pages/Playground.jsx` bajo su categoría (`Átomo`, `Molécula`, `Organismo`, `Feedback`). Sin excepción.
+- **Playground como catálogo**: todo componente visual de `packages/ui` debe agregarse a `apps/web/src/pages/Playground.jsx` bajo su categoría (`Átomo`, `Molécula`, `Organismo`, `Feedback`). Los componentes exclusivos del móvil no se cargan en la web.
 - **Estilo de código — skill `ponytail` (obligatoria)**: cargar la skill `ponytail` antes de escribir o modificar cualquier código. Actuar como dev senior perezoso; el cambio más pequeño que resuelve la tarea completa (incluyendo callers y tests), sin abstracciones, opciones ni features no pedidas. Cerrar cada respuesta con lo omitido y el riesgo relevante.
 
 ## Estructura
@@ -44,7 +45,9 @@ el grafo al día. El grafo es la fuente de contexto; este archivo solo resume re
 Frontend/
 ├─ apps/
 │  ├─ web/        React + Vite · Playground en /playground (solo DEV)
+│  │              components/ = componentes exclusivos de web
 │  └─ mobile/     Expo + React Native
+│                 components/ = componentes exclusivos de móvil
 ├─ packages/
 │  ├─ tokens/     Style Dictionary → build/light.js
 │  ├─ ui/         átomos/moléculas/organismos + tema + Storybook
@@ -128,6 +131,8 @@ pnpm --filter @agrodoc/mobile start
 |---|---|
 | Nuevo token | `packages/tokens/src/{primitives,semantic}/` + build |
 | Nuevo átomo | `packages/ui/src/atoms/X/` + exportar en `packages/ui/index.js` |
+| Componente exclusivo web | `apps/web/src/components/<Nombre>/` |
+| Componente exclusivo móvil | `apps/mobile/src/components/<Nombre>/` |
 | Probar visualmente | `apps/web/src/pages/Playground.jsx` (catálogo por niveles) |
 | Nueva página web | `apps/web/src/pages/<área>/` + ruta en `apps/web/src/router/AppRouter.jsx` |
 | Nueva pantalla móvil | `apps/mobile/src/screens/<área>/` |
@@ -141,11 +146,11 @@ pnpm --filter @agrodoc/mobile start
 | Tema | ✅ | `ThemeProvider` + `useTheme` |
 | UI atoms | 🟡 | `Button`, `Input`, `Icon`, `Avatar`, `Text`, `Checkbox`, `DynamicBar`, `Divider`, `Badge`; falta `Switch` |
 | UI assets | ✅ | logotipo (`AGRODOC_LOGO`) y fondos de auth (`LOGIN_BACKGROUND`, `REGISTER_BACKGROUND`) |
-| UI moléculas | ✅ | `FormField`, `PasswordInput`, `CheckboxInput`, `StepIndicator`, `OrDivider`, `ConfidenceBar` |
-| UI organismos | 🟡 | `LoginForm`, `RegisterForm`, `Alert`, `ConfirmDialog`; faltan header/navegación |
-| Playground web | ✅ | catálogo por niveles con Badge, ConfidenceBar, Alert y ConfirmDialog |
-| App web | ✅ | login, registro, guard por rol, panel admin (activar/desactivar) y bandeja del agrónomo |
-| App móvil | ✅ | login, registro, bloqueo admin y flujo agricultor foto → preview → diagnóstico; backend por IP de Metro o `EXPO_PUBLIC_API_URL` |
+| UI moléculas | ✅ | `FormField`, `PasswordInput`, `CheckboxInput`, `StepIndicator`, `OrDivider`, `ConfidenceBar`, `NavItem` |
+| UI organismos | 🟡 | `LoginForm`, `RegisterForm`, `Alert`, `ConfirmDialog`; faltan header y card de cultivo |
+| Playground web | ✅ | catálogo por niveles con Badge, ConfidenceBar, Alert, ConfirmDialog, NavItem y SidebarNav (web) |
+| App web | ✅ | login, registro, guard por rol, panel admin, bandeja del agrónomo y barra lateral del agricultor (`src/components/SidebarNav`) |
+| App móvil | ✅ | login, registro, bloqueo admin y flujo agricultor foto → preview → diagnóstico con barra inferior (`src/components/BottomNav`); backend por IP de Metro o `EXPO_PUBLIC_API_URL` |
 | Feature auth | ✅ | esquemas, servicios, hooks (401/409), store, `RoleGuard`, recuperación y `LogoutButton` |
 | Feature diagnóstico | ✅ | análisis con MSW, confianza alta/media/baja, consulta con agrónomo |
 | Feature suscripciones | ✅ | plan básico sin muro de pago y registro de pagos |
@@ -160,7 +165,7 @@ Todo agente debe actualizarlo al terminar una tarea que cambie el proyecto:
 1. **Estado actual**: actualizar solo si cambió el estado real de un área (✅ / 🟡 / ⏳).
 2. **Pendientes**: quitar lo completado y agregar lo nuevo.
 3. **Reglas / estructura / comandos / trampas**: modificar solo si el cambio afecta cómo se trabaja.
-4. **Playground**: si creaste o modificaste un componente visual, actualizarlo en `apps/web/src/pages/Playground.jsx` bajo su categoría.
+4. **Playground**: si creaste o modificaste un componente de `packages/ui` o uno exclusivo de la web, actualízalo en `apps/web/src/pages/Playground.jsx` bajo su categoría.
 5. **Grafo**: ejecutar `graphify update .` para reflejar los cambios de código.
 
 Reglas de escritura:
@@ -175,7 +180,7 @@ Reglas de escritura:
 - Persistir la sesión móvil con almacenamiento seguro (hoy queda en memoria).
 - Crear pantalla y ruta web de recuperación de contraseña (el hook ya existe).
 - Implementar cámara real en móvil (hoy el flujo usa una foto local de ejemplo).
-- Crear átomo `Switch` y moléculas restantes de navegación.
+- Crear átomo `Switch` y organismos pendientes (header, card de cultivo).
 - Añadir script `watch` de tokens para desarrollo.
 - Eliminar `apps/web/src/App.css` (resto del template Vite, ya sin uso).
 - Ejecutar el flujo Maestro contra un backend/emulador real en CI.
