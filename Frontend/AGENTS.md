@@ -147,10 +147,10 @@ pnpm --filter @agrodoc/mobile start
 | UI atoms | 🟡 | `Button`, `Input`, `Icon`, `Avatar`, `Text`, `Checkbox`, `DynamicBar`, `Divider`, `Badge`; falta `Switch` |
 | UI assets | ✅ | logotipo (`AGRODOC_LOGO`) y fondos de auth (`LOGIN_BACKGROUND`, `REGISTER_BACKGROUND`) |
 | UI moléculas | ✅ | `FormField`, `PasswordInput`, `CheckboxInput`, `StepIndicator`, `OrDivider`, `ConfidenceBar`, `NavItem` |
-| UI organismos | 🟡 | `LoginForm`, `RegisterForm`, `Alert`, `ConfirmDialog`; faltan header y card de cultivo |
-| Playground web | ✅ | catálogo por niveles con Badge, ConfidenceBar, Alert, ConfirmDialog, NavItem y SidebarNav (web) |
-| App web | ✅ | login, registro, guard por rol, panel admin, bandeja del agrónomo y barra lateral del agricultor (`src/components/SidebarNav`) |
-| App móvil | ✅ | login, registro, bloqueo admin y flujo agricultor foto → preview → diagnóstico con barra inferior (`src/components/BottomNav`); backend por IP de Metro o `EXPO_PUBLIC_API_URL` |
+| UI organismos | 🟡 | `LoginForm`, `RegisterForm`, `Alert`, `ConfirmDialog`, `GreetingTitle`; faltan header compartido y card de cultivo |
+| Playground web | ✅ | catálogo por niveles con Badge, ConfidenceBar, Alert, ConfirmDialog, NavItem, GreetingTitle y SidebarNav (web) |
+| App web | ✅ | login, registro, guard por rol, panel admin, bandeja del agrónomo y home del agricultor con saludo y barra lateral (`src/components/SidebarNav`) |
+| App móvil | ✅ | login, registro, bloqueo admin e inicio del agricultor con saludo, barra superior (`src/components/TopBar`), barra inferior (`src/components/BottomNav`), cámara real (`src/screens/farmer/CameraScreen`) y verificación de la foto (`src/components/PhotoVerification`); backend por IP de Metro o `EXPO_PUBLIC_API_URL` |
 | Feature auth | ✅ | esquemas, servicios, hooks (401/409), store, `RoleGuard`, recuperación y `LogoutButton` |
 | Feature diagnóstico | ✅ | análisis con MSW, confianza alta/media/baja, consulta con agrónomo |
 | Feature suscripciones | ✅ | plan básico sin muro de pago y registro de pagos |
@@ -179,8 +179,8 @@ Reglas de escritura:
 
 - Persistir la sesión móvil con almacenamiento seguro (hoy queda en memoria).
 - Crear pantalla y ruta web de recuperación de contraseña (el hook ya existe).
-- Implementar cámara real en móvil (hoy el flujo usa una foto local de ejemplo).
-- Crear átomo `Switch` y organismos pendientes (header, card de cultivo).
+- Conectar «Continuar» de la verificación de la foto con el análisis del diagnóstico.
+- Crear átomo `Switch` y organismos pendientes (header compartido, card de cultivo).
 - Añadir script `watch` de tokens para desarrollo.
 - Eliminar `apps/web/src/App.css` (resto del template Vite, ya sin uso).
 - Ejecutar el flujo Maestro contra un backend/emulador real en CI.

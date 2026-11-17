@@ -23,7 +23,13 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "AgroDoc usa la cámara para fotografiar tus cultivos."
+        }
+      ]
     ]
   }
 }

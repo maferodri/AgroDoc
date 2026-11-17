@@ -1,0 +1,25 @@
+appId: com.agrodoc.mobile
+---
+# Inicio del agricultor: registro, saludo y apertura de la cámara.
+# Requiere el backend local o un entorno de pruebas.
+- launchApp:
+    clearState: true
+- tapOn: "Crear Cuenta"
+- tapOn: "Nombre"
+- inputText: "Maestro Agricultor"
+- tapOn: "Correo Electrónico"
+- inputText: "maestro@agrodoc.com"
+- tapOn:
+    text: "Contraseña"
+    index: 0
+- inputText: "AgroDoc123"
+- tapOn: "Confirmar Contraseña"
+- inputText: "AgroDoc123"
+- tapOn: "Crear Cuenta"
+- assertVisible: "Buenos Días"
+
+# La acción central de la barra inferior abre la cámara.
+- tapOn: "Fotografía"
+- assertVisible: "Captura"
+- tapOn: "Regresar"
+- assertVisible: "Buenos Días"

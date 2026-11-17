@@ -31,7 +31,7 @@ test('un agricultor en /admin es redirigido a su ruta', async ({ page }) => {
     await page.goto('/admin');
 
     await expect(page).toHaveURL(/\/agricultor$/);
-    await expect(page.getByText('Panel del agricultor')).toBeVisible();
+    await expect(page.getByText('Buenos Días')).toBeVisible();
     await expect(page.getByText('Panel de administración')).toHaveCount(0);
 });
 

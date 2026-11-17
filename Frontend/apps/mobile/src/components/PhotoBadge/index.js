@@ -1,0 +1,1 @@
+export { PhotoBadge } from './PhotoBadge';

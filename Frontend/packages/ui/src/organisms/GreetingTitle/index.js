@@ -1,0 +1,1 @@
+export { GreetingTitle } from './GreetingTitle';

@@ -31,5 +31,6 @@ export { NAV_ITEM_VARIANTS } from './src/molecules/NavItem/NavItem.styles';
 export { Alert } from './src/organisms/Alert/Alert';
 export { ALERT_VARIANTS } from './src/organisms/Alert/Alert.styles';
 export { ConfirmDialog } from './src/organisms/ConfirmDialog/ConfirmDialog';
+export { GreetingTitle } from './src/organisms/GreetingTitle/GreetingTitle';
 export { LoginForm } from './src/organisms/LoginForm/LoginForm';
 export { RegisterForm } from './src/organisms/RegisterForm/RegisterForm';

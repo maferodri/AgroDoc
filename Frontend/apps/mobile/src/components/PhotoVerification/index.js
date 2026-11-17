@@ -1,0 +1,1 @@
+export { PhotoVerification } from './PhotoVerification';

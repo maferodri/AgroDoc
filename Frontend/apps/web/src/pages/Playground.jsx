@@ -19,6 +19,7 @@ import {
     Divider,
     DynamicBar,
     FormField,
+    GreetingTitle,
     Icon,
     ICON_NAMES,
     Input,
@@ -288,6 +289,10 @@ const NavItemDemo = () => {
         </>
     );
 };
+
+const GreetingTitleDemo = () => (
+    <GreetingTitle greeting="Buenos Días" name="Carlos Estévez" />
+);
 
 const SidebarNavDemo = () => {
     const theme = useTheme();
@@ -1190,6 +1195,10 @@ export default function Playground() {
 
                     <CatalogItem name="RegisterForm">
                         <RegisterFormDemo />
+                    </CatalogItem>
+
+                    <CatalogItem name="GreetingTitle">
+                        <GreetingTitleDemo />
                     </CatalogItem>
 
                     <CatalogItem name="SidebarNav (web)">

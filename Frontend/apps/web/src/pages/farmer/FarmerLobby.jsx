@@ -1,11 +1,13 @@
 /**
  * Documento: lobby del agricultor (web).
  * La web es de consulta: el diagnóstico por cámara vive solo en la app móvil.
- * Incluye la barra lateral con únicamente la sección de inicio habilitada.
+ * Incluye la barra lateral con únicamente la sección de inicio habilitada y
+ * el saludo del inicio.
  */
 import { useMemo } from 'react';
 import { View } from 'react-native';
-import { Text, useTheme } from '@agrodoc/ui';
+import { useAuth } from '@agrodoc/features';
+import { GreetingTitle, Text, useTheme } from '@agrodoc/ui';
 import { SidebarNav } from '../../components/SidebarNav';
 
 /** Secciones y acciones que todavía no tienen pantalla en la web. */
@@ -21,6 +23,7 @@ const DISABLED_KEYS = [
 
 export default function FarmerLobby() {
     const theme = useTheme();
+    const { user } = useAuth();
     const styles = useMemo(
         () => ({
             screen: {
@@ -37,7 +40,7 @@ export default function FarmerLobby() {
             content: {
                 flex: 1,
                 alignItems: 'center',
-                justifyContent: 'center',
+                justifyContent: 'flex-start',
                 gap: theme.spacing.sm,
                 padding: theme.spacing.lg,
             },
@@ -52,7 +55,10 @@ export default function FarmerLobby() {
             </View>
 
             <View style={styles.content}>
-                <Text variant="title">Panel del agricultor</Text>
+                <GreetingTitle
+                    greeting="Buenos Días"
+                    name={user?.full_name ?? 'Agricultor'}
+                />
                 <Text variant="body" color="notselected" align="center">
                     Para tomar fotos y diagnosticar tus cultivos usa la app
                     móvil de AgroDoc.

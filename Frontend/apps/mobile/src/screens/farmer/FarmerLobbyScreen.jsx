@@ -1,173 +1,71 @@
 /**
- * Documento: lobby del agricultor (móvil).
- * Flujo principal: captura de foto → previsualización → análisis con
- * confianza. Si la confianza es baja, ofrece consultar a un agrónomo.
- * Incluye la barra inferior con únicamente la sección de inicio habilitada.
+ * Documento: inicio del agricultor (móvil).
+ * Solo muestra el encabezado, el saludo y la barra de navegación. La cámara
+ * se abre desde la acción central de la barra inferior y, tras capturar la
+ * foto, se pasa a la verificación de la imagen.
  */
 import { useState } from 'react';
-import { Image, ScrollView, View } from 'react-native';
-import {
-    DiagnosisResult,
-    LogoutButton,
-    useAnalyzeDiagnosis,
-    useCreateConsultation,
-} from '@agrodoc/features';
+import { View } from 'react-native';
+import { useAuth } from '@agrodoc/features';
+import { GreetingTitle, useTheme } from '@agrodoc/ui';
 import { BottomNav } from '../../components/BottomNav';
-import { Button, Text, useTheme } from '@agrodoc/ui';
-
-// Imagen local de ejemplo: evita depender de la cámara en las pruebas E2E.
-const SAMPLE_PHOTO = require('../../../assets/icon.png');
+import { TopBar } from '../../components/TopBar';
+import CameraScreen from './CameraScreen';
+import PhotoVerificationScreen from './PhotoVerificationScreen';
 
 export default function FarmerLobbyScreen() {
     const theme = useTheme();
-    const [step, setStep] = useState('capture');
-    const [diagnosis, setDiagnosis] = useState(null);
-    const [consultationMessage, setConsultationMessage] = useState('');
-    const analyze = useAnalyzeDiagnosis();
-    const createConsultation = useCreateConsultation();
+    const { user } = useAuth();
+    const [view, setView] = useState('home');
+    const [photo, setPhoto] = useState(null);
 
-    const startPreview = () => {
-        setDiagnosis(null);
-        setConsultationMessage('');
-        setStep('preview');
-    };
-
-    const runDiagnosis = () => {
-        // La referencia identifica la foto; en producción será `image.imageUri`.
-        analyze.mutate(
-            { image: 'sample-crop' },
-            {
-                onSuccess: (result) => {
-                    setDiagnosis(result);
-                    setStep('result');
-                },
-            }
+    if (view === 'camera') {
+        return (
+            <CameraScreen
+                onBack={() => setView('home')}
+                onCapture={(captured) => {
+                    setPhoto(captured);
+                    setView('verify');
+                }}
+            />
         );
-    };
+    }
 
-    const requestConsultation = () => {
-        createConsultation.mutate(
-            { diagnosisId: diagnosis.id },
-            {
-                onSuccess: () =>
-                    setConsultationMessage(
-                        'Consulta enviada. Un agrónomo revisará tu cultivo.'
-                    ),
-            }
+    if (view === 'verify' && photo) {
+        return (
+            <PhotoVerificationScreen
+                photo={photo}
+                onBack={() => setView('home')}
+                onRetake={() => setView('camera')}
+            />
         );
-    };
-
-    const reset = () => {
-        setDiagnosis(null);
-        setConsultationMessage('');
-        setStep('capture');
-    };
+    }
 
     return (
         <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-            <ScrollView
-                testID="farmer-diagnosis"
-                style={{ flex: 1 }}
-                contentContainerStyle={{
-                    padding: theme.spacing.lg,
-                    paddingBottom: theme.spacing.xxl,
-                    gap: theme.spacing.lg,
-                    alignItems: 'center',
-                }}
-            >
-                <View
-                    style={{
-                        width: '100%',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: theme.spacing.sm,
-                    }}
-                >
-                    <Text variant="subtitle">Diagnóstico de cultivos</Text>
-                    <LogoutButton />
-                </View>
+            <TopBar
+                title="Inicio"
+                leftAction={{ icon: 'person', label: 'Perfil', disabled: true }}
+                rightActions={[
+                    {
+                        icon: 'bell',
+                        label: 'Notificaciones',
+                        disabled: true,
+                    },
+                ]}
+            />
 
-                {step === 'capture' ? (
-                    <View
-                        style={{
-                            width: '100%',
-                            alignItems: 'center',
-                            gap: theme.spacing.md,
-                        }}
-                    >
-                        <Text
-                            variant="body"
-                            color="notselected"
-                            align="center"
-                        >
-                            Toma una foto clara de las hojas afectadas para
-                            analizarla.
-                        </Text>
-                        <Button
-                            title="Tomar foto"
-                            onPress={startPreview}
-                            fullWidth
-                        />
-                    </View>
-                ) : null}
+            <View style={{ flex: 1, padding: theme.spacing.lg }}>
+                <GreetingTitle
+                    greeting="Buenos Días"
+                    name={user?.full_name ?? 'Agricultor'}
+                />
+            </View>
 
-                {step === 'preview' ? (
-                    <View
-                        testID="photo-preview"
-                        style={{
-                            width: '100%',
-                            alignItems: 'center',
-                            gap: theme.spacing.md,
-                        }}
-                    >
-                        <Image
-                            source={SAMPLE_PHOTO}
-                            style={{
-                                width: '100%',
-                                height: 260,
-                                borderRadius: theme.radius.card,
-                            }}
-                            resizeMode="cover"
-                            accessibilityLabel="Previsualización de la foto del cultivo"
-                        />
-                        <Button
-                            title="Analizar foto"
-                            onPress={runDiagnosis}
-                            loading={analyze.isPending}
-                            fullWidth
-                        />
-                        <Button
-                            title="Repetir foto"
-                            variant="ghost"
-                            onPress={startPreview}
-                            fullWidth
-                        />
-                        {analyze.isError ? (
-                            <Text color="danger" align="center">
-                                No se pudo analizar la foto. Intenta de nuevo.
-                            </Text>
-                        ) : null}
-                    </View>
-                ) : null}
-
-                {step === 'result' && diagnosis ? (
-                    <View style={{ width: '100%', gap: theme.spacing.md }}>
-                        <DiagnosisResult
-                            diagnosis={diagnosis}
-                            onRequestConsultation={requestConsultation}
-                            onRetry={reset}
-                        />
-                        {consultationMessage ? (
-                            <Text color="success" align="center">
-                                {consultationMessage}
-                            </Text>
-                        ) : null}
-                    </View>
-                ) : null}
-            </ScrollView>
-
-            <BottomNav activeKey="home" captureDisabled />
+            <BottomNav
+                activeKey="home"
+                onCapture={() => setView('camera')}
+            />
         </View>
     );
 }
