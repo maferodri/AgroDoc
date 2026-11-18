@@ -23,35 +23,25 @@ const reactNativeSvgSoundShim = fileURLToPath(
   new URL('./shims/react-native-svg-sound.js', import.meta.url),
 )
 
-const resolveAlias = [
-  {
-    find: /^(?:\.\.\/)+fabric\/NativeSvgSoundModule$/,
-    replacement: reactNativeSvgSoundShim,
+// Intercepta la importación relativa dentro de react-native-svg en Vite 8 (Rolldown)
+const nativeSvgSoundPlugin = {
+  name: 'shim-native-svg-sound',
+  enforce: 'pre',
+  resolveId(source) {
+    if (/(?:^|\/)fabric\/NativeSvgSoundModule(?:\.js)?$/.test(source)) {
+      return reactNativeSvgSoundShim
+    }
   },
-  {
-    find: /^@react-native\/assets-registry\/registry$/,
-    replacement: 'react-native-web/asset-registry',
-  },
-  { find: /^react-native-svg$/, replacement: reactNativeSvgWeb },
-  { find: /^react-native$/, replacement: 'react-native-web' },
-]
-
-// El optimizer usa un build de rolldown aparte que no hereda `resolve.alias` y
-// solo aliasa imports bare, así que hay que repetirlos en formato objeto.
-const optimizeDepsAlias = {
-  'react-native-svg': reactNativeSvgWeb,
-  'react-native': 'react-native-web',
-  '@react-native/assets-registry/registry': 'react-native-web/asset-registry',
-  '../fabric/NativeSvgSoundModule': reactNativeSvgSoundShim,
 }
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [nativeSvgSoundPlugin, react()],
   // El optimizer de Vite 8 no usa `resolve.extensions`; hay que declararlas
   // en su propio resolver para que se elijan los archivos `.web.js`.
   optimizeDeps: {
     rolldownOptions: {
+      plugins: [nativeSvgSoundPlugin],
       resolve: {
         alias: optimizeDepsAlias,
         extensions: [
@@ -68,7 +58,18 @@ export default defineConfig({
     },
   },
   resolve: {
-    alias: resolveAlias,
+    alias: [
+      {
+        find: /(?:^|\/)fabric\/NativeSvgSoundModule(?:\.js)?$/,
+        replacement: reactNativeSvgSoundShim,
+      },
+      {
+        find: /^@react-native\/assets-registry\/registry$/,
+        replacement: 'react-native-web/asset-registry',
+      },
+      { find: /^react-native-svg$/, replacement: reactNativeSvgWeb },
+      { find: /^react-native$/, replacement: 'react-native-web' },
+    ],
     extensions: ['.web.jsx', '.web.js', '.jsx', '.js', '.json'],
   },
 })
