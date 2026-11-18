@@ -38,6 +38,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 
+TREATMENT_PRIORITIES = ("alta", "media", "baja")
+
 
 class Pest(Base):
     """Catálogo de plagas. `model_label` es la clase que devuelve el modelo."""
@@ -56,11 +58,12 @@ class Pest(Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+    # El orden por prioridad (alta → media → baja) se aplica en `service`,
+    # no aquí: un ORDER BY sobre texto ordenaría alfabéticamente.
     treatments: Mapped[list["Treatment"]] = relationship(
         back_populates="pest",
         cascade="all, delete-orphan",
         passive_deletes=True,
-        order_by="Treatment.title",
     )
     diagnoses: Mapped[list["Diagnosis"]] = relationship(
         back_populates="pest",
@@ -88,9 +91,20 @@ class PestCrop(Base):
 
 
 class Treatment(Base):
-    """Recomendación de tratamiento para una plaga."""
+    """Recomendación de tratamiento para una plaga.
+
+    `recommendation` es la indicación en lenguaje sencillo para el agricultor;
+    `dose` es opcional (hay prácticas sin dosis, como las culturales); y
+    `priority` indica el orden en que se recomienda aplicar (alta, media, baja).
+    """
 
     __tablename__ = "treatments"
+    __table_args__ = (
+        CheckConstraint(
+            "priority IN ('alta', 'media', 'baja')",
+            name="priority_valid",
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -106,6 +120,9 @@ class Treatment(Base):
     treatment_type: Mapped[str] = mapped_column(String(50), nullable=False)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
+    recommendation: Mapped[str] = mapped_column(Text, nullable=False)
+    dose: Mapped[str | None] = mapped_column(Text)
+    priority: Mapped[str] = mapped_column(String(10), nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
