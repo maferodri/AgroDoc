@@ -35,7 +35,9 @@ def module_health() -> ModuleHealth:
     description=(
         "Recibe una imagen (`multipart/form-data`, campo `file`), la preprocesa "
         "con los metadatos embebidos en el ONNX y devuelve la plaga detectada, "
-        "la confianza y las mejores `top_k` predicciones."
+        "la confianza y las mejores `top_k` predicciones. La confianza principal "
+        "se devuelve también como porcentaje entero (`confidence_percent`, "
+        "por ejemplo `87` para 87%)."
     ),
 )
 async def predict_image(file: UploadFile = File(...)) -> Prediction:

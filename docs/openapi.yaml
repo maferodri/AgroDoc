@@ -585,6 +585,7 @@ paths:
       tags:
         - diagnosis
       summary: Obtener un diagnóstico por ID
+      description: Devuelve el diagnóstico del usuario autenticado con la lista de tratamientos de la plaga ordenados por prioridad.
       security:
         - BearerAuth: []
       parameters:
@@ -617,7 +618,9 @@ paths:
         Endpoint directo de inferencia para el frontend. Recibe una imagen, la
         preprocesa con los metadatos embebidos en `ml/export/model.onnx`
         (input_size, mean, std, resize_mode) y devuelve la clase predicha, su
-        confianza y las mejores `top_k` predicciones.
+        confianza y las mejores `top_k` predicciones. La confianza principal
+        también se devuelve redondeada como porcentaje entero
+        (`confidence_percent`: `87` equivale a 87%).
 
         No guarda nada en la base de datos ni valida el cultivo: para el flujo
         completo con persistencia y escalado a consultas usa `POST /diagnoses`.
@@ -1236,6 +1239,20 @@ components:
           example: Aplicación de Bacillus thuringiensis
         description:
           type: string
+        recommendation:
+          type: string
+          description: Recomendación redactada en lenguaje sencillo.
+          example: Aplique Bt en el cogollo en las primeras horas de la mañana.
+        dose:
+          type: string
+          nullable: true
+          description: Dosis específica; nula si el tratamiento no aplica dosis.
+          example: 1-2 kg/ha según formulación
+        priority:
+          type: string
+          enum: [alta, media, baja]
+          description: Prioridad de aplicación del tratamiento.
+          example: alta
 
     PestDetail:
       allOf:
@@ -1263,6 +1280,7 @@ components:
       required:
         - label
         - confidence
+        - confidence_percent
         - top_k
         - model_version
       properties:
@@ -1272,6 +1290,12 @@ components:
         confidence:
           type: number
           example: 0.8734
+        confidence_percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Confianza redondeada a porcentaje entero (`87` equivale a 87%).
+          example: 87
         top_k:
           type: array
           items:
@@ -1317,6 +1341,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TopKPrediction'
+        treatments:
+          type: array
+          description: Tratamientos de la plaga, ordenados por prioridad (alta → media → baja).
+          items:
+            $ref: '#/components/schemas/Treatment'
         consultation_id:
           type: string
           format: uuid

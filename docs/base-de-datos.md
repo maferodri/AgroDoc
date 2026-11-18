@@ -213,6 +213,9 @@ erDiagram
         text treatment_type
         text title
         text description
+        text recommendation "lenguaje sencillo"
+        text dose "opcional"
+        text priority "alta | media | baja"
     }
     diagnoses {
         uuid id PK

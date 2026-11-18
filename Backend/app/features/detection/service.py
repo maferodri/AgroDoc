@@ -128,6 +128,16 @@ def _softmax(values: np.ndarray) -> np.ndarray:
     return exp / np.sum(exp)
 
 
+def _confidence_percent(confidence: float) -> int:
+    """Convierte una confianza en [0, 1] al porcentaje entero que ve el usuario.
+
+    Se acota el rango antes de multiplicar para que un valor ligeramente fuera
+    de [0, 1] (ruido de coma flotante) no produzca -1% ni 101%.
+    """
+    bounded = min(max(confidence, 0.0), 1.0)
+    return round(bounded * 100)
+
+
 def predict(image_bytes: bytes, top_k: int = 5) -> Prediction:
     config = _config()
     labels = config["labels"]
@@ -151,9 +161,11 @@ def predict(image_bytes: bytes, top_k: int = 5) -> Prediction:
     order = np.argsort(scores)[::-1][:count]
     top = [TopKPrediction(label=labels[index], confidence=float(scores[index])) for index in order]
 
+    best = top[0]
     return Prediction(
-        label=top[0].label,
-        confidence=top[0].confidence,
+        label=best.label,
+        confidence=best.confidence,
+        confidence_percent=_confidence_percent(best.confidence),
         top_k=top,
         model_version=config["version"],
     )
