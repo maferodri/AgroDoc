@@ -11,6 +11,7 @@ import RootNavigator from './RootNavigator';
 
 jest.mock('@agrodoc/features', () => ({
     useAuth: jest.fn(),
+    usePredictImage: () => ({ mutate: jest.fn() }),
     useLoginForm: () => ({
         email: '',
         password: '',

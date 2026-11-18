@@ -30,6 +30,7 @@ export function PhotoPreview({
                 <Image
                     source={source}
                     resizeMode="cover"
+                    accessible
                     accessibilityRole="image"
                     accessibilityLabel={label}
                     style={styles.image}

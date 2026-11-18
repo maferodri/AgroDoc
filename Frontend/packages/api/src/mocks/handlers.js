@@ -268,6 +268,25 @@ export const handlers = [
         return HttpResponse.json(diagnosisFromImage(body.image));
     }),
 
+    // Endpoint directo del modelo ONNX: espera la imagen en el campo `file`.
+    http.post(`${API_BASE_URL}/detection/predict`, async ({ request }) => {
+        const form = await request.formData();
+
+        if (!form.get('file')) {
+            return errorResponse(400, 'BAD_REQUEST', 'Falta el archivo de imagen.');
+        }
+
+        return HttpResponse.json({
+            label: 'cafe_roya',
+            confidence: 0.8734,
+            top_k: [
+                { label: 'cafe_roya', confidence: 0.8734 },
+                { label: 'cafe_sano', confidence: 0.0912 },
+            ],
+            model_version: 'v1.0.0',
+        });
+    }),
+
     http.get(`${API_BASE_URL}/consultations`, ({ request }) => {
         const user = userFromRequest(request);
 

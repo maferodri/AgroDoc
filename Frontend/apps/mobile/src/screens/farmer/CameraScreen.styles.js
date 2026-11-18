@@ -9,6 +9,7 @@ export const getStyles = ({ colors, spacing, radius, size }) =>
         screen: {
             flex: 1,
             backgroundColor: colors.text,
+            justifyContent: 'center'
         },
         permission: {
             flex: 1,
@@ -19,13 +20,14 @@ export const getStyles = ({ colors, spacing, radius, size }) =>
         },
         overlay: {
             ...StyleSheet.absoluteFillObject,
-            justifyContent: 'space-between',
+            justifyContent: 'center',
         },
         viewfinder: {
             width: '85%',
             aspectRatio: 0.9,
             alignSelf: 'center',
             borderRadius: radius.card,
+            
         },
         corner: {
             position: 'absolute',

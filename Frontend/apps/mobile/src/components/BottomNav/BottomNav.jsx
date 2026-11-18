@@ -40,7 +40,8 @@ export function BottomNav({
             variant="mobile"
             icon={item.icon}
             label={item.label}
-            disabled={item.disabled}
+            // La sección activa se muestra habilitada aunque siga sin destino.
+            disabled={item.disabled && activeKey !== item.key}
             selected={activeKey === item.key}
             onPress={() => onSelect?.(item.key)}
             style={styles.item}

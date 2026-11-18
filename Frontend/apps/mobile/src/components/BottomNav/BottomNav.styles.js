@@ -25,7 +25,7 @@ export const getStyles = ({ colors, spacing, size }) =>
         },
         action: {
             position: 'absolute',
-            top: -(size.avatarLg / 2),
+            top: -(size.avatarLg / 4),
             left: 0,
             right: 0,
             alignItems: 'center',

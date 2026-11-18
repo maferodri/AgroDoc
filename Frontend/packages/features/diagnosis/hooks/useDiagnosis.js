@@ -8,6 +8,7 @@ import {
     analyzeDiagnosis,
     createConsultation,
     listConsultations,
+    predictImage,
 } from '../api/diagnosisApi.js';
 import { diagnosisKeys } from './queryKeys.js';
 
@@ -15,6 +16,13 @@ import { diagnosisKeys } from './queryKeys.js';
 export function useAnalyzeDiagnosis() {
     return useMutation({
         mutationFn: analyzeDiagnosis,
+    });
+}
+
+/** Envía la foto al modelo ONNX y espera la predicción. */
+export function usePredictImage() {
+    return useMutation({
+        mutationFn: predictImage,
     });
 }
 

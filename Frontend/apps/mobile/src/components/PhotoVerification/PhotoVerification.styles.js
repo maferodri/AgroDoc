@@ -7,6 +7,7 @@ import { StyleSheet } from 'react-native';
 export const getStyles = ({ colors, spacing, radius, typography }) =>
     StyleSheet.create({
         container: {
+            flex: 1,
             gap: spacing.lg,
         },
         header: {

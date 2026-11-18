@@ -58,7 +58,7 @@ export function getApiBaseUrl() {
  * @param {string} path Ruta relativa, p. ej. `/auth/login`.
  * @param {object} [options]
  * @param {'GET'|'POST'|'PATCH'|'PUT'|'DELETE'} [options.method] Verbo HTTP.
- * @param {object} [options.body] Cuerpo serializado como JSON.
+ * @param {object|FormData} [options.body] Cuerpo JSON o formulario multipart.
  * @param {string} [options.token] Token Bearer para endpoints protegidos.
  * @param {AbortSignal} [options.signal] Señal para cancelar la petición.
  * @param {Record<string, string>} [options.headers] Cabeceras adicionales.
@@ -66,8 +66,11 @@ export function getApiBaseUrl() {
  */
 export async function request(path, { method = 'GET', body, token, signal, headers } = {}) {
     const finalHeaders = { Accept: 'application/json', ...headers };
+    // `FormData` (subida de archivos) no se serializa: `fetch` pone el
+    // Content-Type con el boundary correcto y sobrescribirlo rompería la carga.
+    const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
 
-    if (body !== undefined) {
+    if (body !== undefined && !isFormData) {
         finalHeaders['Content-Type'] = 'application/json';
     }
 
@@ -81,7 +84,7 @@ export async function request(path, { method = 'GET', body, token, signal, heade
         response = await fetch(`${baseUrl}${path}`, {
             method,
             headers: finalHeaders,
-            body: body === undefined ? undefined : JSON.stringify(body),
+            body: body === undefined || isFormData ? body : JSON.stringify(body),
             signal,
         });
     } catch (error) {

@@ -146,16 +146,16 @@ pnpm --filter @agrodoc/mobile start
 | Tema | ✅ | `ThemeProvider` + `useTheme` |
 | UI atoms | 🟡 | `Button`, `Input`, `Icon`, `Avatar`, `Text`, `Checkbox`, `DynamicBar`, `Divider`, `Badge`; falta `Switch` |
 | UI assets | ✅ | logotipo (`AGRODOC_LOGO`) y fondos de auth (`LOGIN_BACKGROUND`, `REGISTER_BACKGROUND`) |
-| UI moléculas | ✅ | `FormField`, `PasswordInput`, `CheckboxInput`, `StepIndicator`, `OrDivider`, `ConfidenceBar`, `NavItem` |
+| UI moléculas | ✅ | `FormField`, `PasswordInput`, `CheckboxInput`, `StepIndicator`, `OrDivider`, `ConfidenceBar`, `PestName`, `ConfidenceScore`, `NavItem` |
 | UI organismos | 🟡 | `LoginForm`, `RegisterForm`, `Alert`, `ConfirmDialog`, `GreetingTitle`; faltan header compartido y card de cultivo |
 | Playground web | ✅ | catálogo por niveles con Badge, ConfidenceBar, Alert, ConfirmDialog, NavItem, GreetingTitle y SidebarNav (web) |
 | App web | ✅ | login, registro, guard por rol, panel admin, bandeja del agrónomo y home del agricultor con saludo y barra lateral (`src/components/SidebarNav`) |
-| App móvil | ✅ | login, registro, bloqueo admin e inicio del agricultor con saludo, barra superior (`src/components/TopBar`), barra inferior (`src/components/BottomNav`), cámara real (`src/screens/farmer/CameraScreen`) y verificación de la foto (`src/components/PhotoVerification`); backend por IP de Metro o `EXPO_PUBLIC_API_URL` |
+| App móvil | ✅ | login, registro, bloqueo admin e inicio del agricultor con saludo, barra superior (`src/components/TopBar`), barra inferior (`src/components/BottomNav`), cámara real (`src/screens/farmer/CameraScreen`), verificación de la foto (`src/components/PhotoVerification`) con validación de peso/formato, envío a `/detection/predict` con modal de progreso (`src/components/AnalysisModal`) y resultado del diagnóstico (`src/screens/farmer/DiagnosisResultScreen` + `src/components/DiagnosisInfo`); backend por IP de Metro o `EXPO_PUBLIC_API_URL` |
 | Feature auth | ✅ | esquemas, servicios, hooks (401/409), store, `RoleGuard`, recuperación y `LogoutButton` |
-| Feature diagnóstico | ✅ | análisis con MSW, confianza alta/media/baja, consulta con agrónomo |
+| Feature diagnóstico | ✅ | análisis con MSW, predicción directa (`/detection/predict`), validación de peso y formato de la foto, confianza alta/media/baja, consulta con agrónomo |
 | Feature suscripciones | ✅ | plan básico sin muro de pago y registro de pagos |
 | Feature admin | ✅ | lista de usuarios y cambio de estado |
-| api / store / utils | 🟡 | `@agrodoc/api` con cliente y MSW; `utils` con confianza; `store` sigue como scaffold |
+| api / store / utils | 🟡 | `@agrodoc/api` con cliente y MSW; `utils` con confianza y validación de fotos; `store` sigue como scaffold |
 | Pruebas | ✅ | `pnpm lint`, `pnpm test`, Playwright y Storybook funcionan |
 
 ## Mantenimiento de este archivo
@@ -179,7 +179,7 @@ Reglas de escritura:
 
 - Persistir la sesión móvil con almacenamiento seguro (hoy queda en memoria).
 - Crear pantalla y ruta web de recuperación de contraseña (el hook ya existe).
-- Conectar «Continuar» de la verificación de la foto con el análisis del diagnóstico.
+- Habilitar «Ver Tratamiento» en el resultado del diagnóstico cuando exista la pantalla de tratamientos.
 - Crear átomo `Switch` y organismos pendientes (header compartido, card de cultivo).
 - Añadir script `watch` de tokens para desarrollo.
 - Eliminar `apps/web/src/App.css` (resto del template Vite, ya sin uso).
@@ -188,6 +188,7 @@ Reglas de escritura:
 ## Trampas conocidas
 
 - **Botones sin estilos** → `build/light.js` desactualizado o tokens exportados como objetos. Ejecutar build de tokens.
+- **Subida de archivos en Expo 58** → el `fetch` global es `expo/fetch`, que solo acepta `Blob`/`File` en `FormData` (una parte `{ uri }` de React Native lanza «Unsupported FormDataPart implementation» o llega como texto). En móvil usar `new File(uri)` de `expo-file-system`; en web ese módulo no existe (`validatePath is not a function`), así que hay que convertir el data URL de la cámara con `fetch(uri).blob()`.
 - `useTheme()` lanza error si el componente no está dentro de `<ThemeProvider>`.
 - No importar rutas internas (`@agrodoc/ui/src/...`); usar `@agrodoc/ui`.
 - No usar `react-native-web` directamente en componentes compartidos.

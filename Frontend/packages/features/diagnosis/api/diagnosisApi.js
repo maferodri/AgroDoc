@@ -10,7 +10,30 @@ import {
     createConsultationSchema,
     diagnosisRequestSchema,
     diagnosisSchema,
+    predictionSchema,
 } from '../schemas/diagnosisSchemas.js';
+
+/**
+ * Clasifica una foto con el modelo ONNX (`POST /detection/predict`).
+ * No persiste nada: solo devuelve la predicción y su confianza (0–1).
+ *
+ * @param {{ file: Blob }} input Archivo a analizar. En móvil debe ser un `File`
+ *   de `expo-file-system`: `expo/fetch` no acepta la forma `{ uri }` de RN.
+ * @param {{ signal?: AbortSignal }} [options] Cancelación.
+ * @returns {Promise<object>} Predicción validada.
+ */
+export async function predictImage({ file }, { signal } = {}) {
+    const form = new FormData();
+    form.append('file', file);
+
+    const response = await request('/detection/predict', {
+        method: 'POST',
+        body: form,
+        signal,
+    });
+
+    return predictionSchema.parse(response);
+}
 
 /**
  * Analiza una foto de cultivo.

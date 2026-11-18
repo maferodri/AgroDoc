@@ -16,16 +16,19 @@ export {
     createConsultationSchema,
     diagnosisRequestSchema,
     diagnosisSchema,
+    predictionSchema,
 } from './diagnosis/schemas/diagnosisSchemas.js';
 export {
     analyzeDiagnosis,
     createConsultation,
     listConsultations,
+    predictImage,
 } from './diagnosis/api/diagnosisApi.js';
 export {
     useAnalyzeDiagnosis,
     useConsultations,
     useCreateConsultation,
+    usePredictImage,
 } from './diagnosis/hooks/useDiagnosis.js';
 export { DiagnosisResult } from './diagnosis/components/DiagnosisResult.jsx';
 export {

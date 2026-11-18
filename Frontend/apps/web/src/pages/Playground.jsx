@@ -15,6 +15,7 @@ import {
     Checkbox,
     CheckboxInput,
     ConfidenceBar,
+    ConfidenceScore,
     ConfirmDialog,
     Divider,
     DynamicBar,
@@ -27,6 +28,7 @@ import {
     NavItem,
     OrDivider,
     PasswordInput,
+    PestName,
     RegisterForm,
     StepIndicator,
     Text,
@@ -938,6 +940,40 @@ const ConfidenceBarDemo = () => {
     );
 };
 
+const PestNameDemo = () => {
+    const theme = useTheme();
+
+    return (
+        <View
+            style={{
+                maxWidth: 480,
+                padding: theme.spacing.lg,
+                borderRadius: theme.radius.card,
+                backgroundColor: theme.colors.special,
+            }}
+        >
+            <PestName name="Cafe Roya" />
+        </View>
+    );
+};
+
+const ConfidenceScoreDemo = () => {
+    const theme = useTheme();
+
+    return (
+        <View
+            style={{
+                maxWidth: 480,
+                padding: theme.spacing.lg,
+                borderRadius: theme.radius.card,
+                backgroundColor: theme.colors.special,
+            }}
+        >
+            <ConfidenceScore value={92.8} />
+        </View>
+    );
+};
+
 const AlertDemo = () => {
     const theme = useTheme();
 
@@ -1178,6 +1214,14 @@ export default function Playground() {
 
                     <CatalogItem name="ConfidenceBar">
                         <ConfidenceBarDemo />
+                    </CatalogItem>
+
+                    <CatalogItem name="PestName">
+                        <PestNameDemo />
+                    </CatalogItem>
+
+                    <CatalogItem name="ConfidenceScore">
+                        <ConfidenceScoreDemo />
                     </CatalogItem>
 
                     <CatalogItem name="NavItem">

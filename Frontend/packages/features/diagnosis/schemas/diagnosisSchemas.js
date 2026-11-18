@@ -23,6 +23,19 @@ export const diagnosisRequestSchema = z.object({
     crop_id: z.uuid().optional(),
 });
 
+/** Salida directa de `/detection/predict` (sin persistencia). */
+export const predictionSchema = z.object({
+    label: z.string().min(1),
+    confidence: z.number().min(0).max(1),
+    top_k: z.array(
+        z.object({
+            label: z.string().min(1),
+            confidence: z.number().min(0).max(1),
+        })
+    ),
+    model_version: z.string().min(1),
+});
+
 /** Consulta enviada a un agrónomo desde un diagnóstico. */
 export const consultationSchema = z.object({
     id: z.uuid(),

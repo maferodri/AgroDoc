@@ -22,6 +22,8 @@ export { Text } from './src/atoms/Text/Text';
 export { TEXT_ALIGNS, TEXT_COLORS, TEXT_VARIANTS } from './src/atoms/Text/Text.styles';
 export { FormField } from './src/molecules/FormField/FormField';
 export { ConfidenceBar } from './src/molecules/ConfidenceBar/ConfidenceBar';
+export { ConfidenceScore } from './src/molecules/ConfidenceScore/ConfidenceScore';
+export { PestName } from './src/molecules/PestName/PestName';
 export { PasswordInput } from './src/molecules/PasswordInput/PasswordInput';
 export { CheckboxInput } from './src/molecules/CheckboxInput/CheckboxInput';
 export { OrDivider } from './src/molecules/OrDivider/OrDivider';

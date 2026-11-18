@@ -39,4 +39,23 @@ describe('request', () => {
             request('/users/me')
         ).rejects.toMatchObject({ status: 401, isUnauthorized: true });
     });
+
+    it('envía FormData como multipart y devuelve la predicción', async () => {
+        const form = new FormData();
+        form.append(
+            'file',
+            new Blob(['foto'], { type: 'image/jpeg' }),
+            'foto.jpg'
+        );
+
+        const prediction = await request('/detection/predict', {
+            method: 'POST',
+            body: form,
+        });
+
+        expect(prediction).toMatchObject({
+            label: 'cafe_roya',
+            model_version: 'v1.0.0',
+        });
+    });
 });

@@ -9,3 +9,8 @@ export {
     getConfidenceLevel,
     requiresAgronomist,
 } from './src/confidence.js';
+export {
+    ALLOWED_PHOTO_TYPES,
+    MAX_PHOTO_SIZE_BYTES,
+    validatePhotoFile,
+} from './src/photo.js';
