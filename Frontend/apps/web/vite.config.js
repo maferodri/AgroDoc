@@ -43,7 +43,6 @@ export default defineConfig({
     rolldownOptions: {
       plugins: [nativeSvgSoundPlugin],
       resolve: {
-        alias: optimizeDepsAlias,
         extensions: [
           '.web.jsx',
           '.web.js',
