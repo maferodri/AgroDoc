@@ -139,14 +139,14 @@ pnpm --filter @agrodoc/mobile start
 |---|---|---|
 | Tokens | ✅ | build exporta valores planos y números |
 | Tema | ✅ | `ThemeProvider` + `useTheme` |
-| UI atoms | 🟡 | `Button`, `Input`, `Icon`, `Avatar`, `Text`, `Checkbox`, `DynamicBar`, `Divider`, `Badge`; falta `Switch` |
+| UI atoms | 🟡 | `Button`, `Input`, `DigitInput`, `Icon`, `Avatar`, `Text`, `Checkbox`, `DynamicBar`, `Divider`, `Badge`; falta `Switch` |
 | UI assets | ✅ | logotipo (`AGRODOC_LOGO`) y fondos de auth (`LOGIN_BACKGROUND`, `REGISTER_BACKGROUND`) |
-| UI moléculas | ✅ | `FormField`, `PasswordInput`, `CheckboxInput`, `StepIndicator`, `OrDivider`, `ConfidenceBar` |
-| UI organismos | 🟡 | `LoginForm`, `RegisterForm`, `Alert`, `ConfirmDialog`; faltan header/navegación |
+| UI moléculas | ✅ | `FormField`, `PasswordInput`, `CheckboxInput`, `StepIndicator`, `OrDivider`, `ConfidenceBar`, `Callout`, `CodeInput` |
+| UI organismos | 🟡 | `LoginForm`, `RegisterForm`, `PasswordResetForm`, `PasswordResetConfirmForm`, `Alert`, `ConfirmDialog`; faltan header/navegación |
 | Playground web | ✅ | catálogo por niveles con Badge, ConfidenceBar, Alert y ConfirmDialog |
-| App web | ✅ | login, registro, guard por rol, panel admin (activar/desactivar) y bandeja del agrónomo |
-| App móvil | ✅ | login, registro, bloqueo admin y flujo agricultor foto → preview → diagnóstico; backend por IP de Metro o `EXPO_PUBLIC_API_URL` |
-| Feature auth | ✅ | esquemas, servicios, hooks (401/409), store, `RoleGuard`, recuperación y `LogoutButton` |
+| App web | ✅ | login, registro, recuperación de contraseña, guard por rol, panel admin (activar/desactivar) y bandeja del agrónomo |
+| App móvil | ✅ | login, registro, recuperación de contraseña, bloqueo admin y flujo agricultor foto → preview → diagnóstico; backend por IP de Metro o `EXPO_PUBLIC_API_URL` |
+| Feature auth | ✅ | esquemas, servicios, hooks (401/409), store, `RoleGuard`, recuperación en dos pasos y `LogoutButton` |
 | Feature diagnóstico | ✅ | análisis con MSW, confianza alta/media/baja, consulta con agrónomo |
 | Feature suscripciones | ✅ | plan básico sin muro de pago y registro de pagos |
 | Feature admin | ✅ | lista de usuarios y cambio de estado |
@@ -173,7 +173,6 @@ Reglas de escritura:
 ## Pendientes
 
 - Persistir la sesión móvil con almacenamiento seguro (hoy queda en memoria).
-- Crear pantalla y ruta web de recuperación de contraseña (el hook ya existe).
 - Implementar cámara real en móvil (hoy el flujo usa una foto local de ejemplo).
 - Crear átomo `Switch` y moléculas restantes de navegación.
 - Añadir script `watch` de tokens para desarrollo.
@@ -192,9 +191,11 @@ Reglas de escritura:
 - **API móvil inalcanzable en Expo Go** → `apps/mobile/src/config/api.js` resuelve la URL al arrancar: `EXPO_PUBLIC_API_URL`, luego la IP de Metro con puerto 8000 y, por último, `localhost`. En producción la variable es obligatoria; en modo túnel (`*.exp.direct`) también, porque el túnel no expone el backend.
 - **Iconos no cargan en dev** → Vite 8 no aplica `resolve.extensions` al optimizer; revisar `optimizeDeps.rolldownOptions.resolve.extensions` y el alias de `react-native-svg` en `apps/web/vite.config.js`.
 - El Playground no existe en producción (`import.meta.env.DEV`).
+- `pnpm --filter @agrodoc/web build` falla con Vite 8.3.2/Rolldown al resolver el shim `react-native-svg-sound` como ruta relativa (`../../UNLOADABLE_DEPENDENCY`); el modo dev y los tests no se ven afectados.
 - `packages/ui/src/theme/tokens.js` existe pero **no** está exportado en `index.js`; no asumir que está disponible.
 - `Text` resuelve su `fontFamily` con `fontFamily.web.js`; en web agrega fallback sans porque Inter no se carga por defecto.
 - Los hooks de `@agrodoc/features` (React Query) fallan sin `QueryClientProvider`; la app debe montarlo antes del router.
+- **Código de recuperación de un solo uso** → `/auth/password-reset/verify` marca el código como verificado. Si el `confirm` falla por red, reutilizar el `reset_token` guardado; volver a verificar el mismo código responde `invalid_reset_code` y obliga a reenviar uno nuevo.
 
 <!-- BEGIN:turborepo-agent-rules -->
 

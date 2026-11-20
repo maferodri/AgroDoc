@@ -6,6 +6,7 @@
 import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom';
 import { useAuth } from '@agrodoc/features';
 import Login from '../pages/auth/Login';
+import RecoverPassword from '../pages/auth/RecoverPassword';
 import Register from '../pages/auth/Register';
 import AdminLobby from '../pages/admin/AdminLobby';
 import AgronomistLobby from '../pages/agronomist/AgronomistLobby';
@@ -52,6 +53,17 @@ function PublicRegister() {
     return <Register />;
 }
 
+/** Evita mostrar la recuperación cuando el usuario ya tiene sesión activa. */
+function PublicRecoverPassword() {
+    const { isAuthenticated, role } = useAuth();
+
+    if (isAuthenticated && role) {
+        return <Navigate to={getHomeRoute(role)} replace />;
+    }
+
+    return <RecoverPassword />;
+}
+
 export default function AppRouter() {
     return (
         <BrowserRouter>
@@ -59,6 +71,10 @@ export default function AppRouter() {
             {/* Rutas públicas */}
             <Route path={ROUTES.login} element={<PublicLogin />} />
             <Route path={ROUTES.register} element={<PublicRegister />} />
+            <Route
+                path={ROUTES.recoverPassword}
+                element={<PublicRecoverPassword />}
+            />
             <Route path="/" element={<HomeRedirect />} />
 
             {/* Lobbies por rol, protegidos contra acceso cruzado */}

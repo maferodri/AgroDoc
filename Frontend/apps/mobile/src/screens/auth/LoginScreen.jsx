@@ -5,7 +5,6 @@
  */
 import { useMemo } from 'react';
 import {
-    Alert,
     ImageBackground,
     KeyboardAvoidingView,
     Platform,
@@ -20,8 +19,9 @@ import { getStyles } from './LoginScreen.styles';
 
 /**
  * @param {() => void} [onRegister] Navega a la creación de cuenta.
+ * @param {() => void} [onForgotPassword] Navega a la recuperación de contraseña.
  */
-export default function LoginScreen({ onRegister }) {
+export default function LoginScreen({ onRegister, onForgotPassword }) {
     const theme = useTheme();
     const styles = useMemo(() => getStyles(theme), [theme]);
     const { height } = useWindowDimensions();
@@ -62,12 +62,7 @@ export default function LoginScreen({ onRegister }) {
                             error={error}
                             loading={loading}
                             showFooter={false}
-                            onForgotPassword={() =>
-                                Alert.alert(
-                                    'Recuperación de contraseña',
-                                    'Disponible próximamente.'
-                                )
-                            }
+                            onForgotPassword={onForgotPassword}
                             onRegister={onRegister}
                         />
 

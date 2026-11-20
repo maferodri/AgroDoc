@@ -7,6 +7,7 @@ import { useAuth } from '@agrodoc/features';
 import AdminNotAllowedScreen from '../screens/admin/AdminNotAllowedScreen';
 import AgronomistLobbyScreen from '../screens/agronomist/AgronomistLobbyScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
+import RecoverPasswordScreen from '../screens/auth/RecoverPasswordScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 import FarmerLobbyScreen from '../screens/farmer/FarmerLobbyScreen';
 
@@ -23,10 +24,21 @@ const LOBBY_BY_ROLE = {
 function PublicAuth() {
     const [screen, setScreen] = useState('login');
 
-    return screen === 'register' ? (
-        <RegisterScreen onLogin={() => setScreen('login')} />
-    ) : (
-        <LoginScreen onRegister={() => setScreen('register')} />
+    if (screen === 'register') {
+        return <RegisterScreen onLogin={() => setScreen('login')} />;
+    }
+
+    if (screen === 'recoverPassword') {
+        return (
+            <RecoverPasswordScreen onLogin={() => setScreen('login')} />
+        );
+    }
+
+    return (
+        <LoginScreen
+            onRegister={() => setScreen('register')}
+            onForgotPassword={() => setScreen('recoverPassword')}
+        />
     );
 }
 

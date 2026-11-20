@@ -6,6 +6,7 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { useAuthStore } from './store/authStore.js';
+import { useConfirmPasswordResetForm } from './hooks/useConfirmPasswordResetForm.js';
 import { useLoginForm } from './hooks/useLoginForm.js';
 import { useRecoverPasswordForm } from './hooks/useRecoverPasswordForm.js';
 import { useRegisterForm } from './hooks/useRegisterForm.js';
@@ -148,6 +149,79 @@ describe('useRecoverPasswordForm', () => {
 
         await waitFor(() =>
             expect(result.current.message).toContain('Si el correo está registrado')
+        );
+    });
+});
+
+describe('useConfirmPasswordResetForm', () => {
+    const email = 'agricultor@agrodoc.com';
+
+    it('valida código y contraseñas antes de llamar a la API', () => {
+        const { result } = renderHookWithQuery(() =>
+            useConfirmPasswordResetForm({ email })
+        );
+
+        act(() => {
+            result.current.setCode('123');
+            result.current.setNewPassword('NuevaClave123');
+            result.current.setConfirmPassword('NuevaClave123');
+        });
+        act(() => {
+            result.current.submit();
+        });
+        expect(result.current.errors.code).toBe(
+            'Ingresa el código de 6 dígitos.'
+        );
+
+        act(() => {
+            result.current.setCode('123456');
+            result.current.setConfirmPassword('OtraClave123');
+        });
+        act(() => {
+            result.current.submit();
+        });
+        expect(result.current.errors.confirmPassword).toBe(
+            'Las contraseñas no coinciden.'
+        );
+    });
+
+    it('verifica el código y actualiza la contraseña', async () => {
+        const onSuccess = vi.fn();
+        const { result } = renderHookWithQuery(() =>
+            useConfirmPasswordResetForm({ email, onSuccess })
+        );
+
+        act(() => {
+            result.current.setCode('123456');
+            result.current.setNewPassword('NuevaClave123');
+            result.current.setConfirmPassword('NuevaClave123');
+        });
+
+        await act(async () => {
+            result.current.submit();
+        });
+
+        await waitFor(() => expect(onSuccess).toHaveBeenCalled());
+        expect(result.current.error).toBe('');
+    });
+
+    it('muestra el error cuando el código no es válido', async () => {
+        const { result } = renderHookWithQuery(() =>
+            useConfirmPasswordResetForm({ email })
+        );
+
+        act(() => {
+            result.current.setCode('000000');
+            result.current.setNewPassword('NuevaClave123');
+            result.current.setConfirmPassword('NuevaClave123');
+        });
+
+        await act(async () => {
+            result.current.submit();
+        });
+
+        await waitFor(() =>
+            expect(result.current.errors.code).toContain('inválido')
         );
     });
 });

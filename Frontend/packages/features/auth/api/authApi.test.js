@@ -5,10 +5,12 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+    confirmPasswordReset,
     listAgronomists,
     loginUser,
     registerUser,
     requestPasswordReset,
+    verifyPasswordResetCode,
 } from '../api/authApi.js';
 
 describe('authApi con MSW', () => {
@@ -72,6 +74,34 @@ describe('authApi con MSW', () => {
         });
 
         expect(response.message).toContain('agricultor@agrodoc.com');
+    });
+
+    it('valida el código y obtiene el reset_token', async () => {
+        const response = await verifyPasswordResetCode({
+            email: 'agricultor@agrodoc.com',
+            code: '123456',
+        });
+
+        expect(response.expires_in).toBe(600);
+        expect(response.reset_token).toContain('reset.');
+    });
+
+    it('rechaza un código inválido con 400', async () => {
+        await expect(
+            verifyPasswordResetCode({
+                email: 'agricultor@agrodoc.com',
+                code: '000000',
+            })
+        ).rejects.toMatchObject({ status: 400, code: 'invalid_reset_code' });
+    });
+
+    it('cambia la contraseña con el reset_token', async () => {
+        const response = await confirmPasswordReset({
+            reset_token: 'reset.agricultor@agrodoc.com',
+            new_password: 'NuevaClave123',
+        });
+
+        expect(response.message).toBe('Contraseña actualizada.');
     });
 
     it('lista agrónomos con sesión válida', async () => {

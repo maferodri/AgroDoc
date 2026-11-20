@@ -76,6 +76,57 @@ export const recoverPasswordSchema = z.object({
     email: z.email('Ingresa un correo válido.'),
 });
 
+/** Cuerpo de `/auth/password-reset/verify`: valida el código enviado por correo. */
+export const passwordResetVerifySchema = z.object({
+    email: z.email('Ingresa un correo válido.'),
+    code: z
+        .string()
+        .trim()
+        .min(1, 'Ingresa el código de recuperación.')
+        .max(64),
+});
+
+/** Cuerpo de `/auth/password-reset/confirm`: define la nueva contraseña. */
+export const passwordResetConfirmSchema = z.object({
+    reset_token: z.string().min(1).max(512),
+    new_password: z
+        .string()
+        .min(8, 'La contraseña debe tener al menos 8 caracteres.')
+        .max(128),
+});
+
+/**
+ * Formulario del paso 2: código del correo y nueva contraseña.
+ * El código se exige con 6 dígitos porque es el tamaño que emite el backend.
+ */
+export const passwordResetConfirmFormSchema = z
+    .object({
+        code: z
+            .string()
+            .trim()
+            .regex(/^\d{6}$/, 'Ingresa el código de 6 dígitos.'),
+        new_password: z
+            .string()
+            .min(8, 'La contraseña debe tener al menos 8 caracteres.')
+            .max(128, 'La contraseña es demasiado larga.'),
+        confirm_password: z.string().min(1, 'Confirma tu contraseña.'),
+    })
+    .refine((data) => data.new_password === data.confirm_password, {
+        path: ['confirm_password'],
+        message: 'Las contraseñas no coinciden.',
+    });
+
+/** Respuesta de `/auth/password-reset/verify`. */
+export const passwordResetVerifyResponseSchema = z.object({
+    reset_token: z.string().min(1),
+    expires_in: z.number().int().positive(),
+});
+
+/** Respuesta genérica `MessageResponse` del contrato. */
+export const messageResponseSchema = z.object({
+    message: z.string(),
+});
+
 
 /** Cuerpo de `/auth/refresh` y `/auth/logout`. */
 export const refreshTokenSchema = z.object({

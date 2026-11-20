@@ -11,10 +11,13 @@ import {
     Avatar,
     Badge,
     Button,
+    Callout,
     Checkbox,
     CheckboxInput,
+    CodeInput,
     ConfidenceBar,
     ConfirmDialog,
+    DigitInput,
     Divider,
     DynamicBar,
     FormField,
@@ -24,6 +27,8 @@ import {
     LoginForm,
     OrDivider,
     PasswordInput,
+    PasswordResetConfirmForm,
+    PasswordResetForm,
     RegisterForm,
     StepIndicator,
     Text,
@@ -820,6 +825,139 @@ const LoginFormDemo = () => {
     );
 };
 
+/** Ejemplo interactivo del organismo PasswordResetForm en sus dos variantes. */
+const PasswordResetFormPreview = ({ variant }) => {
+    const [email, setEmail] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    // Simula el envío del código para revisar el estado de carga del botón.
+    const handleSubmit = () => {
+        setLoading(true);
+        setTimeout(() => {
+            setLoading(false);
+            alert(`Enviar código · ${email || 'sin correo'}`);
+        }, 600);
+    };
+
+    return (
+        <PasswordResetForm
+            variant={variant}
+            email={email}
+            onChangeEmail={setEmail}
+            onSubmit={handleSubmit}
+            onLogin={() => alert('Iniciar sesión')}
+            loading={loading}
+        />
+    );
+};
+
+const PasswordResetFormDemo = () => {
+    const theme = useTheme();
+
+    return (
+        <>
+            <SubTitle>Web (tarjeta sobre fondo del catálogo)</SubTitle>
+            {/* El fondo gris permite ver la tarjeta sin simular una página blanca. */}
+            <View
+                style={{
+                    backgroundColor: theme.colors.background,
+                    borderRadius: theme.radius.card,
+                    padding: theme.spacing.lg,
+                    alignItems: 'center',
+                }}
+            >
+                <View style={{ width: '100%', maxWidth: 480 }}>
+                    <PasswordResetFormPreview variant="web" />
+                </View>
+            </View>
+
+            <SubTitle>Móvil (sin tarjeta)</SubTitle>
+            <View
+                style={{
+                    backgroundColor: theme.colors.surface,
+                    borderRadius: theme.radius.card,
+                    padding: theme.spacing.lg,
+                    alignItems: 'center',
+                }}
+            >
+                <View style={{ width: '100%', maxWidth: 380 }}>
+                    <PasswordResetFormPreview variant="mobile" />
+                </View>
+            </View>
+        </>
+    );
+};
+
+/** Ejemplo interactivo del organismo PasswordResetConfirmForm. */
+const PasswordResetConfirmFormPreview = ({ variant }) => {
+    const [code, setCode] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    // Simula el envío para revisar el estado de carga del botón principal.
+    const handleSubmit = () => {
+        setLoading(true);
+        setTimeout(() => {
+            setLoading(false);
+            alert(`Restablecer · ${code || 'sin código'}`);
+        }, 600);
+    };
+
+    return (
+        <PasswordResetConfirmForm
+            variant={variant}
+            code={code}
+            onChangeCode={setCode}
+            newPassword={newPassword}
+            confirmPassword={confirmPassword}
+            onChangeNewPassword={setNewPassword}
+            onChangeConfirmPassword={setConfirmPassword}
+            onSubmit={handleSubmit}
+            onCancel={() => alert('Cancelar')}
+            onResend={() => alert('Reenviar código')}
+            loading={loading}
+        />
+    );
+};
+
+const PasswordResetConfirmFormDemo = () => {
+    const theme = useTheme();
+
+    return (
+        <>
+            <SubTitle>Web (tarjeta sobre fondo del catálogo)</SubTitle>
+            {/* El fondo gris permite ver la tarjeta sin simular una página blanca. */}
+            <View
+                style={{
+                    backgroundColor: theme.colors.background,
+                    borderRadius: theme.radius.card,
+                    padding: theme.spacing.lg,
+                    alignItems: 'center',
+                }}
+            >
+                <View style={{ width: '100%', maxWidth: 480 }}>
+                    <PasswordResetConfirmFormPreview variant="web" />
+                </View>
+            </View>
+
+            <SubTitle>Móvil (sin tarjeta)</SubTitle>
+            <View
+                style={{
+                    backgroundColor: theme.colors.surface,
+                    borderRadius: theme.radius.card,
+                    padding: theme.spacing.lg,
+                    alignItems: 'center',
+                }}
+            >
+                <View style={{ width: '100%', maxWidth: 380 }}>
+                    <PasswordResetConfirmFormPreview variant="mobile" />
+                </View>
+            </View>
+        </>
+    );
+};
+
 const BadgeDemo = () => {
     const theme = useTheme();
 
@@ -847,6 +985,51 @@ const ConfidenceBarDemo = () => {
             <ConfidenceBar value={92.8} />
             <ConfidenceBar value={64.2} />
             <ConfidenceBar value={34.7} />
+        </View>
+    );
+};
+
+const CalloutDemo = () => (
+    <View style={{ maxWidth: 480 }}>
+        <Callout message="Si no tienes acceso a tu correo, contacta con el administrador de la finca o el panel de soporte técnico." />
+    </View>
+);
+
+const DigitInputDemo = () => {
+    const theme = useTheme();
+    const [digits, setDigits] = useState(['', '', '']);
+
+    return (
+        <View style={{ flexDirection: 'row', gap: theme.spacing.sm, maxWidth: 240 }}>
+            {digits.map((digit, index) => (
+                <DigitInput
+                    key={index}
+                    style={{ flex: 1 }}
+                    value={digit}
+                    onChangeText={(text) =>
+                        setDigits((current) =>
+                            current.map((value, position) =>
+                                position === index ? text : value
+                            )
+                        )
+                    }
+                    accessibilityLabel={`Dígito ${index + 1} de ejemplo`}
+                />
+            ))}
+        </View>
+    );
+};
+
+const CodeInputDemo = () => {
+    const [code, setCode] = useState('');
+
+    return (
+        <View style={{ maxWidth: 480 }}>
+            <CodeInput
+                value={code}
+                onChangeText={setCode}
+                onResend={() => alert('Reenviar código')}
+            />
         </View>
     );
 };
@@ -974,10 +1157,13 @@ export default function Playground() {
                         <Input placeholder="Deshabilitado" disabled />
                     </CatalogItem>
 
+                    <CatalogItem name="DigitInput">
+                        <DigitInputDemo />
+                    </CatalogItem>
+
                     <CatalogItem name="Text">
                         <TextDemo />
                     </CatalogItem>
-
                     <CatalogItem name="Checkbox">
                         <CheckboxDemo />
                     </CatalogItem>
@@ -1073,6 +1259,10 @@ export default function Playground() {
                         <FormFieldDemo />
                     </CatalogItem>
 
+                    <CatalogItem name="CodeInput">
+                        <CodeInputDemo />
+                    </CatalogItem>
+
                     <CatalogItem name="PasswordInput">
                         <PasswordInputDemo />
                     </CatalogItem>
@@ -1092,6 +1282,10 @@ export default function Playground() {
                     <CatalogItem name="ConfidenceBar">
                         <ConfidenceBarDemo />
                     </CatalogItem>
+
+                    <CatalogItem name="Callout">
+                        <CalloutDemo />
+                    </CatalogItem>
                 </LevelSection>
 
                 <LevelSection
@@ -1104,6 +1298,14 @@ export default function Playground() {
 
                     <CatalogItem name="RegisterForm">
                         <RegisterFormDemo />
+                    </CatalogItem>
+
+                    <CatalogItem name="PasswordResetForm">
+                        <PasswordResetFormDemo />
+                    </CatalogItem>
+
+                    <CatalogItem name="PasswordResetConfirmForm">
+                        <PasswordResetConfirmFormDemo />
                     </CatalogItem>
 
                     <ComingSoon>

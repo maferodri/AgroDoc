@@ -3,7 +3,7 @@
  * Confirman que el administrador no tiene acceso móvil y que el agricultor
  * sí llega a su flujo de diagnóstico.
  */
-import { render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import { ThemeProvider } from '@agrodoc/ui';
 import { light } from '@agrodoc/tokens';
 import { useAuth } from '@agrodoc/features';
@@ -19,6 +19,28 @@ jest.mock('@agrodoc/features', () => ({
         loading: false,
         setEmail: jest.fn(),
         setPassword: jest.fn(),
+        submit: jest.fn(),
+    }),
+    useRecoverPasswordForm: () => ({
+        email: '',
+        errors: {},
+        message: '',
+        error: '',
+        loading: false,
+        setEmail: jest.fn(),
+        submit: jest.fn(),
+    }),
+    useConfirmPasswordResetForm: () => ({
+        code: '',
+        newPassword: '',
+        confirmPassword: '',
+        errors: {},
+        error: '',
+        loading: false,
+        setCode: jest.fn(),
+        setNewPassword: jest.fn(),
+        setConfirmPassword: jest.fn(),
+        reset: jest.fn(),
         submit: jest.fn(),
     }),
     LogoutButton: () => null,
@@ -69,5 +91,17 @@ describe('RootNavigator', () => {
         await renderNavigator();
 
         expect(screen.getByText('Iniciar Sesión')).toBeTruthy();
+    });
+
+    it('abre la recuperación de contraseña desde el login', async () => {
+        useAuth.mockReturnValue({
+            isAuthenticated: false,
+            role: null,
+        });
+
+        await renderNavigator();
+        fireEvent.press(screen.getByText('¿Olvidaste tu contraseña?'));
+
+        expect(await screen.findByText('Restablecer Contraseña')).toBeTruthy();
     });
 });

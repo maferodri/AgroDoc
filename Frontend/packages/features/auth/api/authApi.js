@@ -8,6 +8,10 @@ import {
     agronomistListSchema,
     authResponseSchema,
     loginRequestSchema,
+    messageResponseSchema,
+    passwordResetConfirmSchema,
+    passwordResetVerifyResponseSchema,
+    passwordResetVerifySchema,
     recoverPasswordSchema,
     refreshTokenSchema,
     registerRequestSchema,
@@ -22,7 +26,7 @@ import {
  */
 export async function registerUser(input) {
     const body = registerRequestSchema.parse(input);
-    const response = await request('/register', { method: 'POST', body });
+    const response = await request('/auth/register', { method: 'POST', body });
 
     return authResponseSchema.parse(response);
 }
@@ -35,7 +39,7 @@ export async function registerUser(input) {
  */
 export async function loginUser(input) {
     const body = loginRequestSchema.parse(input);
-    const response = await request('/login', { method: 'POST', body });
+    const response = await request('/auth/login', { method: 'POST', body });
 
     return authResponseSchema.parse(response);
 }
@@ -66,15 +70,51 @@ export async function logoutUser({ refreshToken, accessToken }) {
 }
 
 /**
- * Solicita el correo de recuperación de contraseña.
+ * Solicita el envío del código de recuperación de contraseña.
  *
  * @param {{ email: string }} input Correo del usuario.
- * @returns {Promise<{ message: string }>} Confirmación del backend.
+ * @returns {Promise<{ message: string }>} Confirmación genérica del backend.
  */
 export async function requestPasswordReset(input) {
     const body = recoverPasswordSchema.parse(input);
+    const response = await request('/auth/password-reset/request', {
+        method: 'POST',
+        body,
+    });
 
-    return request('/auth/recover-password', { method: 'POST', body });
+    return messageResponseSchema.parse(response);
+}
+
+/**
+ * Valida el código de 6 dígitos y obtiene un token de un solo uso.
+ *
+ * @param {{ email: string, code: string }} input Correo y código recibido.
+ * @returns {Promise<{ reset_token: string, expires_in: number }>} Token validado.
+ */
+export async function verifyPasswordResetCode(input) {
+    const body = passwordResetVerifySchema.parse(input);
+    const response = await request('/auth/password-reset/verify', {
+        method: 'POST',
+        body,
+    });
+
+    return passwordResetVerifyResponseSchema.parse(response);
+}
+
+/**
+ * Define la nueva contraseña usando el token de recuperación.
+ *
+ * @param {{ reset_token: string, new_password: string }} input Token y contraseña.
+ * @returns {Promise<{ message: string }>} Confirmación del backend.
+ */
+export async function confirmPasswordReset(input) {
+    const body = passwordResetConfirmSchema.parse(input);
+    const response = await request('/auth/password-reset/confirm', {
+        method: 'POST',
+        body,
+    });
+
+    return messageResponseSchema.parse(response);
 }
 
 /**

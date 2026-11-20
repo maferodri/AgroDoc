@@ -4,6 +4,7 @@
  * esquemas, store y el guard por rol.
  */
 export {
+    confirmPasswordReset,
     getMyProfile,
     listAgronomists,
     loginUser,
@@ -11,6 +12,7 @@ export {
     refreshSession,
     registerUser,
     requestPasswordReset,
+    verifyPasswordResetCode,
 } from './api/authApi.js';
 
 export {
@@ -23,6 +25,11 @@ export {
     errorResponseSchema,
     getFieldErrors,
     loginRequestSchema,
+    messageResponseSchema,
+    passwordResetConfirmFormSchema,
+    passwordResetConfirmSchema,
+    passwordResetVerifyResponseSchema,
+    passwordResetVerifySchema,
     recoverPasswordSchema,
     refreshTokenSchema,
     registerFormSchema,
@@ -34,6 +41,7 @@ export {
     authKeys,
 } from './hooks/queryKeys.js';
 export { useCurrentUser } from './hooks/useCurrentUser.js';
+export { useConfirmPasswordResetForm } from './hooks/useConfirmPasswordResetForm.js';
 export { useLogin } from './hooks/useLogin.js';
 export { useLoginForm } from './hooks/useLoginForm.js';
 export { useLogout } from './hooks/useLogout.js';

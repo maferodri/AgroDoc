@@ -41,9 +41,7 @@ export default function Login() {
                     error={error}
                     loading={loading}
                     showFooter={false}
-                    onForgotPassword={() =>
-                        window.alert('Recuperación de contraseña próximamente')
-                    }
+                    onForgotPassword={() => navigate(ROUTES.recoverPassword)}
                     onRegister={() => navigate(ROUTES.register)}
                 />
             </View>

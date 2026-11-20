@@ -99,11 +99,17 @@ export async function request(path, { method = 'GET', body, token, signal, heade
     const payload = await readPayload(response);
 
     if (!response.ok) {
+        // El contrato admite errores planos (`{ error, message }`) y de dominio
+        // anidados (`{ error: { code, message } }`); se leen ambos.
+        const error = payload?.error;
+
         throw new ApiError(
-            payload?.message || `La solicitud falló con estado ${response.status}.`,
+            payload?.message ||
+                error?.message ||
+                `La solicitud falló con estado ${response.status}.`,
             {
                 status: response.status,
-                code: payload?.error || 'HTTP_ERROR',
+                code: (typeof error === 'string' ? error : error?.code) || 'HTTP_ERROR',
                 payload,
             },
         );

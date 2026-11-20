@@ -224,12 +224,51 @@ export const handlers = [
         new HttpResponse(null, { status: 204 })
     ),
 
-    http.post(`${API_BASE_URL}/auth/recover-password`, async ({ request }) => {
+    http.post(`${API_BASE_URL}/auth/password-reset/request`, async ({ request }) => {
         const body = await request.json();
 
         return HttpResponse.json({
-            message: `Si ${body.email} está registrado, recibirás un enlace.`,
+            message: `Si ${body.email} está registrado, recibirás un código de recuperación.`,
         });
+    }),
+
+    http.post(`${API_BASE_URL}/auth/password-reset/verify`, async ({ request }) => {
+        const body = await request.json();
+
+        if (body.code !== '123456') {
+            return HttpResponse.json(
+                {
+                    error: {
+                        code: 'invalid_reset_code',
+                        message: 'Código inválido o expirado',
+                    },
+                },
+                { status: 400 }
+            );
+        }
+
+        return HttpResponse.json({
+            reset_token: `reset.${body.email}`,
+            expires_in: 600,
+        });
+    }),
+
+    http.post(`${API_BASE_URL}/auth/password-reset/confirm`, async ({ request }) => {
+        const body = await request.json();
+
+        if (!String(body.reset_token).startsWith('reset.')) {
+            return HttpResponse.json(
+                {
+                    error: {
+                        code: 'invalid_reset_token',
+                        message: 'El token de recuperación es inválido o expiró',
+                    },
+                },
+                { status: 400 }
+            );
+        }
+
+        return HttpResponse.json({ message: 'Contraseña actualizada.' });
     }),
 
     http.get(`${API_BASE_URL}/users/me`, ({ request }) => {

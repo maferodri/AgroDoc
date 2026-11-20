@@ -7,6 +7,9 @@ import { describe, expect, it } from 'vitest';
 import {
     getFieldErrors,
     loginRequestSchema,
+    passwordResetConfirmFormSchema,
+    passwordResetConfirmSchema,
+    passwordResetVerifySchema,
     recoverPasswordSchema,
     registerFormSchema,
     registerRequestSchema,
@@ -91,6 +94,77 @@ describe('recoverPasswordSchema', () => {
         );
         expect(recoverPasswordSchema.safeParse({ email: 'a' }).success).toBe(
             false
+        );
+    });
+});
+
+describe('passwordResetVerifySchema', () => {
+    it('exige correo y código', () => {
+        expect(
+            passwordResetVerifySchema.safeParse({
+                email: 'a@b.com',
+                code: '123456',
+            }).success
+        ).toBe(true);
+
+        const result = passwordResetVerifySchema.safeParse({
+            email: 'a@b.com',
+            code: '   ',
+        });
+
+        expect(result.success).toBe(false);
+        expect(getFieldErrors(result.error).code).toBeTruthy();
+    });
+});
+
+describe('passwordResetConfirmSchema', () => {
+    it('exige token y contraseña de al menos 8 caracteres', () => {
+        expect(
+            passwordResetConfirmSchema.safeParse({
+                reset_token: 'token',
+                new_password: 'NuevaClave123',
+            }).success
+        ).toBe(true);
+
+        const result = passwordResetConfirmSchema.safeParse({
+            reset_token: '',
+            new_password: 'corta',
+        });
+
+        expect(result.success).toBe(false);
+        expect(getFieldErrors(result.error)).toMatchObject({
+            reset_token: expect.any(String),
+            new_password: expect.any(String),
+        });
+    });
+});
+
+describe('passwordResetConfirmFormSchema', () => {
+    it('exige un código de 6 dígitos y contraseñas iguales', () => {
+        const valid = {
+            code: '123456',
+            new_password: 'NuevaClave123',
+            confirm_password: 'NuevaClave123',
+        };
+
+        expect(passwordResetConfirmFormSchema.safeParse(valid).success).toBe(
+            true
+        );
+
+        const shortCode = passwordResetConfirmFormSchema.safeParse({
+            ...valid,
+            code: '123',
+        });
+        expect(getFieldErrors(shortCode.error).code).toBe(
+            'Ingresa el código de 6 dígitos.'
+        );
+
+        const mismatch = passwordResetConfirmFormSchema.safeParse({
+            ...valid,
+            confirm_password: 'OtraClave123',
+        });
+        expect(getFieldErrors(mismatch.error).confirm_password).toBe(
+            'Las contraseñas no coinciden.'
         );
     });
 });

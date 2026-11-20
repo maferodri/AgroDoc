@@ -12,19 +12,21 @@ import {
 } from '../schemas/authSchemas.js';
 
 const NEUTRAL_MESSAGE =
-    'Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.';
+    'Si el correo está registrado, recibirás un código de 6 dígitos para restablecer tu contraseña.';
 
 /** Hook del formulario de recuperación. */
 export function useRecoverPasswordForm() {
     const [email, setEmailValue] = useState('');
     const [errors, setErrors] = useState({});
     const [message, setMessage] = useState('');
+    const [error, setError] = useState('');
     const mutation = useMutation({ mutationFn: requestPasswordReset });
 
     const setEmail = (value) => {
         setEmailValue(value);
         setErrors({});
         setMessage('');
+        setError('');
     };
 
     const submit = () => {
@@ -36,10 +38,13 @@ export function useRecoverPasswordForm() {
         }
 
         setErrors({});
+        setError('');
         mutation.mutate(result.data, {
             onSuccess: () => setMessage(NEUTRAL_MESSAGE),
-            onError: (error) =>
-                setMessage(error?.message || 'No se pudo enviar el correo.'),
+            onError: (requestError) =>
+                setError(
+                    requestError?.message || 'No se pudo enviar el código.'
+                ),
         });
     };
 
@@ -47,6 +52,7 @@ export function useRecoverPasswordForm() {
         email,
         errors,
         message,
+        error,
         loading: mutation.isPending,
         setEmail,
         submit,

@@ -39,4 +39,17 @@ describe('request', () => {
             request('/users/me')
         ).rejects.toMatchObject({ status: 401, isUnauthorized: true });
     });
+
+    it('lee el mensaje y el código de un error de dominio anidado', async () => {
+        await expect(
+            request('/auth/password-reset/verify', {
+                method: 'POST',
+                body: { email: 'agricultor@agrodoc.com', code: '000000' },
+            })
+        ).rejects.toMatchObject({
+            status: 400,
+            code: 'invalid_reset_code',
+            message: 'Código inválido o expirado',
+        });
+    });
 });
